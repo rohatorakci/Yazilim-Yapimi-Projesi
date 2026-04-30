@@ -1,2 +1,2 @@
 # Yazilim-Yapimi-Projesi
-Flutter ile geliştirilen, 6 sefer tekrar prensibi içeren kelime ezberleme sistemi.
+3 Kişilik grup olarak Flutter ile geliştirilen, 6 sefer tekrar prensibi içeren kelime ezberleme sistemi.
