@@ -1,18 +1,17 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'firebase_options.dart'; // <--- BU SATIRI EKLE
+import 'firebase_options.dart';
 import 'login.dart';
-// import 'register.dart'; // Eğer register.dart dosyan hazırsa burayı açabilirsin
+import 'profile.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Firebase'i yeni oluşturduğumuz options dosyasıyla başlatıyoruz
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  
+
   runApp(const MyApp());
 }
 
@@ -43,12 +42,16 @@ class AuthWrapper extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
           );
         }
 
         if (snapshot.hasData) {
-          return const MyHomePage(title: 'Kelime Ezberleme Ana Sayfa');
+          return const MyHomePage(
+            title: 'Kelime Ezberleme Ana Sayfa',
+          );
         } else {
           return const LoginPage();
         }
@@ -58,7 +61,11 @@ class AuthWrapper extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+  const MyHomePage({
+    super.key,
+    required this.title,
+  });
+
   final String title;
 
   @override
@@ -67,6 +74,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
+  int _selectedIndex = 0;
 
   void _incrementCounter() {
     setState(() {
@@ -74,39 +82,101 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  Future<void> _signOut() async {
-    await FirebaseAuth.instance.signOut();
+
+  void _changePage(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  Widget _buildBody() {
+    switch (_selectedIndex) {
+      case 0:
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              'Kelime ezberleme maratonuna hoş geldin!',
+              style: TextStyle(fontSize: 20),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Öğrenilen Kelime: $_counter',
+              style: Theme.of(context).textTheme.headlineMedium,
+            ),
+          ],
+        );
+
+      case 1:
+        return const Center(
+          child: Text(
+            'Kelimeler Sayfası',
+            style: TextStyle(fontSize: 24),
+          ),
+        );
+
+      case 2:
+        return const Center(
+          child: Text(
+            'İstatistik Sayfası',
+            style: TextStyle(fontSize: 24),
+          ),
+        );
+
+      case 3:
+      return const ProfilePage();
+
+      default:
+        return const Center(
+          child: Text('Sayfa bulunamadı'),
+        );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: _signOut,
-          )
-        ],
-      ),
+    backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+  title: Text(widget.title),
+),
+
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('Kelime ezberleme maratonuna hoş geldin!'),
-            Text(
-              'Öğrenilen Kelime: $_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
+        child: _buildBody(),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Kelime Ekle',
-        child: const Icon(Icons.add),
+
+      floatingActionButton: _selectedIndex == 0
+          ? FloatingActionButton(
+              onPressed: _incrementCounter,
+              tooltip: 'Kelime Ekle',
+              child: const Icon(Icons.add),
+            )
+          : null,
+
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _changePage,
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: Colors.deepPurple,
+        unselectedItemColor: Colors.grey,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Ana Sayfa',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.menu_book),
+            label: 'Kelimeler',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bar_chart),
+            label: 'İstatistik',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profil',
+          ),
+        ],
       ),
     );
   }
