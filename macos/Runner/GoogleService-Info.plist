@@ -3,17 +3,17 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyCtLjh2-Vioh8iSLRc5u0XVHQHFVbnV_HQ</string>
+	<string>AIzaSyAIhvy3rveaIPSmq5F-9Ysr6zybc4GoaDA</string>
 	<key>GCM_SENDER_ID</key>
-	<string>952090414657</string>
+	<string>181364155091</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
 	<string>com.example.yazilimYapim</string>
 	<key>PROJECT_ID</key>
-	<string>yazilim-yapimi-d7144</string>
+	<string>yazilim-yapimi-eb2a5</string>
 	<key>STORAGE_BUCKET</key>
-	<string>yazilim-yapimi-d7144.firebasestorage.app</string>
+	<string>yazilim-yapimi-eb2a5.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:952090414657:ios:2c5fbda7776b87abd780c0</string>
+	<string>1:181364155091:ios:bd0a6710a4741836e06a26</string>
 </dict>
 </plist>
