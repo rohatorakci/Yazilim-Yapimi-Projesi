@@ -1,8 +1,40 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  String? _userName;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserName();
+  }
+
+  Future<void> _loadUserName() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final ref = FirebaseDatabase.instance.ref('Users/${user.uid}/UserName');
+    final snapshot = await ref.get();
+
+    if (snapshot.exists) {
+      setState(() {
+        _userName = snapshot.value as String?;
+        _isLoading = false;
+      });
+    } else {
+      setState(() => _isLoading = false);
+    }
+  }
 
   Future<void> _signOut(BuildContext context) async {
     await FirebaseAuth.instance.signOut();
@@ -17,7 +49,6 @@ class ProfilePage extends StatelessWidget {
         title: const Text("Profil"),
         backgroundColor: Colors.deepPurple,
       ),
-
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -35,13 +66,16 @@ class ProfilePage extends StatelessWidget {
                   child: Icon(Icons.person, size: 40),
                 ),
                 const SizedBox(height: 10),
-                Text(
-                  user?.email ?? "Kullanıcı",
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                // ✅ UserName - Realtime Database'den
+                _isLoading
+                    ? const CircularProgressIndicator()
+                    : Text(
+                        _userName ?? user?.email ?? "Kullanıcı",
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                 const SizedBox(height: 5),
                 const Text("Kelime Ezberleme Uygulaması"),
               ],
@@ -53,10 +87,7 @@ class ProfilePage extends StatelessWidget {
           // ⚙️ AYARLAR BAŞLIK
           const Text(
             "Ayarlar",
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
 
           const SizedBox(height: 10),
