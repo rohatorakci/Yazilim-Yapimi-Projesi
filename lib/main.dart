@@ -10,6 +10,7 @@ import 'wordle.dart';
 import 'addWords.dart';
 import 'quizSettings.dart';
 import 'stats.dart';
+import 'words.dart';
 
 // Global tema notifier
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
@@ -210,9 +211,8 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         );
       case 1:
-        return const Center(
-          child: Text('Kelimeler Sayfası', style: TextStyle(fontSize: 24)),
-        );
+        return const WordsPage(); // Artık geçici yazı yerine gerçek sayfayı çağırıyoruz
+
       case 2:
         return const StatsPage();
       case 3:
