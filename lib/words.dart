@@ -99,17 +99,17 @@ class _WordsPageState extends State<WordsPage> {
           : ListView(
               children: [
                 _buildCategoryTile(
-                  "Yanlış Bildiğin Kelimeler (Lvl 0)",
+                  "Yanlış Bildiğin Kelimeler",
                   _wrongWords,
                   Colors.red,
                 ),
                 _buildCategoryTile(
-                  "Öğrenme Aşamasındaki Kelimeler (Lvl 1-5)",
+                  "Öğrenme Aşamasındaki Kelimeler",
                   _learningWords,
                   Colors.orange,
                 ),
                 _buildCategoryTile(
-                  "Öğrendiğin Kelimeler (Lvl 6)",
+                  "Öğrendiğin Kelimeler",
                   _learnedWords,
                   Colors.green,
                 ),
