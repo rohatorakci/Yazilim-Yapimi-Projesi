@@ -6,12 +6,11 @@ import 'firebase_options.dart';
 import 'login.dart';
 import 'profile.dart';
 
+// Global tema notifier
+final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  // Firebase'i yeni oluşturduğumuz options dosyasıyla başlatıyoruz
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   FirebaseDatabase.instance.databaseURL =
       "https://yazilim-yapimi-eb2a5-default-rtdb.europe-west1.firebasedatabase.app/";
@@ -24,14 +23,27 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Kelime Ezberleme Uygulaması',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const AuthWrapper(),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, mode, _) {
+        return MaterialApp(
+          title: 'Kelime Ezberleme Uygulaması',
+          debugShowCheckedModeBanner: false,
+          themeMode: mode,
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+            useMaterial3: true,
+          ),
+          darkTheme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: Colors.deepPurple,
+              brightness: Brightness.dark,
+            ),
+            useMaterial3: true,
+          ),
+          home: const AuthWrapper(),
+        );
+      },
     );
   }
 }
@@ -49,7 +61,6 @@ class AuthWrapper extends StatelessWidget {
             body: Center(child: CircularProgressIndicator()),
           );
         }
-
         if (snapshot.hasData) {
           return const MyHomePage(title: 'Kelime Ezberleme Ana Sayfa');
         } else {
@@ -62,7 +73,6 @@ class AuthWrapper extends StatelessWidget {
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
-
   final String title;
 
   @override
@@ -74,15 +84,11 @@ class _MyHomePageState extends State<MyHomePage> {
   int _selectedIndex = 0;
 
   void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
+    setState(() => _counter++);
   }
 
   void _changePage(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    setState(() => _selectedIndex = index);
   }
 
   Widget _buildBody() {
@@ -102,20 +108,16 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ],
         );
-
       case 1:
         return const Center(
           child: Text('Kelimeler Sayfası', style: TextStyle(fontSize: 24)),
         );
-
       case 2:
         return const Center(
           child: Text('İstatistik Sayfası', style: TextStyle(fontSize: 24)),
         );
-
       case 3:
         return const ProfilePage();
-
       default:
         return const Center(child: Text('Sayfa bulunamadı'));
     }
@@ -124,9 +126,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
       body: Center(child: _buildBody()),
-
       floatingActionButton: _selectedIndex == 0
           ? FloatingActionButton(
               onPressed: _incrementCounter,
@@ -134,7 +134,6 @@ class _MyHomePageState extends State<MyHomePage> {
               child: const Icon(Icons.add),
             )
           : null,
-
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _changePage,
@@ -143,14 +142,8 @@ class _MyHomePageState extends State<MyHomePage> {
         unselectedItemColor: Colors.grey,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Ana Sayfa'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.menu_book),
-            label: 'Kelimeler',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart),
-            label: 'İstatistik',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: 'Kelimeler'),
+          BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'İstatistik'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
         ],
       ),

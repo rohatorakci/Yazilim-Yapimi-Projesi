@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'main.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -12,6 +13,7 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   String? _userName;
   bool _isLoading = true;
+  bool _themeExpanded = false; // Tema paneli açık/kapalı
 
   @override
   void initState() {
@@ -26,14 +28,10 @@ class _ProfilePageState extends State<ProfilePage> {
     final ref = FirebaseDatabase.instance.ref('Users/${user.uid}/UserName');
     final snapshot = await ref.get();
 
-    if (snapshot.exists) {
-      setState(() {
-        _userName = snapshot.value as String?;
-        _isLoading = false;
-      });
-    } else {
-      setState(() => _isLoading = false);
-    }
+    setState(() {
+      _userName = snapshot.exists ? snapshot.value as String? : null;
+      _isLoading = false;
+    });
   }
 
   Future<void> _signOut(BuildContext context) async {
@@ -43,6 +41,7 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
+    final isDark = themeNotifier.value == ThemeMode.dark;
 
     return Scaffold(
       appBar: AppBar(
@@ -66,7 +65,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   child: Icon(Icons.person, size: 40),
                 ),
                 const SizedBox(height: 10),
-                // ✅ UserName - Realtime Database'den
                 _isLoading
                     ? const CircularProgressIndicator()
                     : Text(
@@ -84,7 +82,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
           const SizedBox(height: 20),
 
-          // ⚙️ AYARLAR BAŞLIK
+          // ⚙️ Ayarlar başlık
           const Text(
             "Ayarlar",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -102,13 +100,126 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
 
-          // 🌙 Tema
+          // 🌙 Tema - genişleyebilir panel
           Card(
-            child: ListTile(
-              leading: const Icon(Icons.dark_mode),
-              title: const Text("Tema"),
-              trailing: const Icon(Icons.arrow_forward_ios),
-              onTap: () {},
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.dark_mode),
+                  title: const Text("Tema"),
+                  trailing: Icon(
+                    _themeExpanded
+                        ? Icons.keyboard_arrow_down
+                        : Icons.keyboard_arrow_right,
+                  ),
+                  onTap: () {
+                    setState(() => _themeExpanded = !_themeExpanded);
+                  },
+                ),
+                // Tema seçenekleri
+                if (_themeExpanded)
+                  ValueListenableBuilder<ThemeMode>(
+                    valueListenable: themeNotifier,
+                    builder: (context, currentMode, _) {
+                      return Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                        child: Row(
+                          children: [
+                            // ☀️ Açık tema
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () {
+                                  themeNotifier.value = ThemeMode.light;
+                                  setState(() {});
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: currentMode == ThemeMode.light
+                                        ? Colors.deepPurple
+                                        : Colors.grey.shade200,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: currentMode == ThemeMode.light
+                                          ? Colors.deepPurple
+                                          : Colors.grey.shade400,
+                                    ),
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      Icon(
+                                        Icons.light_mode,
+                                        color: currentMode == ThemeMode.light
+                                            ? Colors.white
+                                            : Colors.grey.shade700,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        "Açık",
+                                        style: TextStyle(
+                                          color: currentMode == ThemeMode.light
+                                              ? Colors.white
+                                              : Colors.grey.shade700,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            // 🌙 Koyu tema
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () {
+                                  themeNotifier.value = ThemeMode.dark;
+                                  setState(() {});
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: currentMode == ThemeMode.dark
+                                        ? Colors.deepPurple
+                                        : Colors.grey.shade200,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: currentMode == ThemeMode.dark
+                                          ? Colors.deepPurple
+                                          : Colors.grey.shade400,
+                                    ),
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      Icon(
+                                        Icons.dark_mode,
+                                        color: currentMode == ThemeMode.dark
+                                            ? Colors.white
+                                            : Colors.grey.shade700,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        "Koyu",
+                                        style: TextStyle(
+                                          color: currentMode == ThemeMode.dark
+                                              ? Colors.white
+                                              : Colors.grey.shade700,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+              ],
             ),
           ),
 
