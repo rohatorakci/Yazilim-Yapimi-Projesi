@@ -9,6 +9,7 @@ import 'quiz.dart';
 import 'wordle.dart';
 import 'addWords.dart';
 import 'quizSettings.dart';
+import 'stats.dart';
 
 // Global tema notifier
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
@@ -213,9 +214,7 @@ class _MyHomePageState extends State<MyHomePage> {
           child: Text('Kelimeler Sayfası', style: TextStyle(fontSize: 24)),
         );
       case 2:
-        return const Center(
-          child: Text('İstatistik Sayfası', style: TextStyle(fontSize: 24)),
-        );
+        return const StatsPage();
       case 3:
         return const ProfilePage();
       default:
