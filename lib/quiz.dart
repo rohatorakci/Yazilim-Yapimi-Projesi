@@ -20,19 +20,19 @@ class _QuizPageState extends State<QuizPage> {
   int _currentIndex = 0;
   int _correctAnswersCount = 0;
   bool _quizFinished = false;
-  bool _isSaved = false; // Firebase'e çift kaydı önlemek için
+  bool _isSaved = false;
 
   final List<Map<String, dynamic>> _quizResults = [];
 
-  // Algoritma için bekleme süreleri (Gün cinsinden)
+  // Kullanıcının her soru için seçtiği cevapları tutan harita (Index: Cevap)
+  final Map<int, String> _selectedAnswers = {};
+
   final List<int> _intervals = [1, 7, 30, 90, 180, 365];
 
-  // Zamanlayıcı ve Ayar değişkenleri
   Timer? _timer;
-  int _timeLeft = 180; // Başlangıçta 180, sonra Firebase'den güncellenecek
-  int _targetQuestionCount =
-      10; // Başlangıçta 10, sonra Firebase'den güncellenecek
-  bool _isUnlimitedTime = false; // Süresiz mod kontrolü
+  int _timeLeft = 180;
+  int _targetQuestionCount = 10;
+  bool _isUnlimitedTime = false;
 
   @override
   void initState() {
@@ -42,13 +42,12 @@ class _QuizPageState extends State<QuizPage> {
 
   @override
   void dispose() {
-    _timer?.cancel(); // Sayfadan çıkıldığında sayacı durdur
+    _timer?.cancel();
     super.dispose();
   }
 
-  // Zamanlayıcıyı başlatan fonksiyon
   void _startTimer() {
-    if (_isUnlimitedTime) return; // Süresiz moddaysa sayacı başlatma
+    if (_isUnlimitedTime) return;
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_timeLeft > 0) {
@@ -56,34 +55,116 @@ class _QuizPageState extends State<QuizPage> {
           _timeLeft--;
         });
       } else {
-        _finishQuiz(); // Süre bitince quizi bitir ve kaydet
+        _finishQuiz();
       }
     });
   }
 
-  // Saniyeyi 03:00 formatına çeviren getter
   String get _formattedTime {
     int minutes = _timeLeft ~/ 60;
     int seconds = _timeLeft % 60;
     return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
-  // Quizi bitirme ve istatistikleri Firebase'e kaydetme işlemi
+  // Sadece cevabı işaretler, veritabanına GÖNDERMEZ
+  void _selectAnswer(String option) {
+    setState(() {
+      _selectedAnswers[_currentIndex] = option;
+    });
+  }
+
+  // Önceki soruya geçiş
+  void _previousQuestion() {
+    if (_currentIndex > 0) {
+      setState(() {
+        _currentIndex--;
+      });
+    }
+  }
+
+  // Sonraki soruya geçiş
+  void _nextQuestion() {
+    if (_currentIndex < _quizQuestions.length - 1) {
+      setState(() {
+        _currentIndex++;
+      });
+    } else {
+      _finishQuiz(); // Son sorudaysa testi bitirir
+    }
+  }
+
+  // Testi bitirme ve TÜM VERİLERİ tek seferde kaydetme
   Future<void> _finishQuiz() async {
     if (_isSaved) return;
     _isSaved = true;
     _timer?.cancel();
+    setState(
+      () => _isLoading = true,
+    ); // Kayıt işlemi bitene kadar yükleme göster
 
-    if (_user != null && _quizResults.isNotEmpty) {
-      int totalAnswered = _quizResults.length;
+    _correctAnswersCount = 0;
+    _quizResults.clear();
+    DateTime now = DateTime.now();
+
+    // Tüm cevapları değerlendir ve sonuç listesini hazırla
+    Map<String, dynamic> wordProgressUpdates = {};
+
+    for (int i = 0; i < _quizQuestions.length; i++) {
+      var q = _quizQuestions[i];
+      String? selected = _selectedAnswers[i]; // Boş bırakılmış olabilir
+
+      bool isCorrect = (selected == q['correctAnswer']);
+      if (isCorrect) _correctAnswersCount++;
+
+      _quizResults.add({
+        'english': q['english'],
+        'selectedAnswer': selected ?? "Boş Bırakıldı",
+        'correctAnswer': q['correctAnswer'],
+        'isCorrect': isCorrect,
+        'category': q['category'],
+      });
+
+      int currentLevel = q['currentLevel'];
+      int newLevel;
+      int nextReviewDate;
+
+      if (isCorrect) {
+        newLevel = currentLevel + 1;
+        int daysToAdd = (currentLevel < _intervals.length)
+            ? _intervals[currentLevel]
+            : 365;
+        nextReviewDate = now
+            .add(Duration(days: daysToAdd))
+            .millisecondsSinceEpoch;
+      } else {
+        newLevel = 0;
+        nextReviewDate = now
+            .add(const Duration(days: 1))
+            .millisecondsSinceEpoch;
+      }
+
+      // Güncellenecek kelime verilerini map'e ekle
+      wordProgressUpdates[q['wordId']] = {
+        'level': newLevel,
+        'nextReviewDate': nextReviewDate,
+        'lastAnswered': now.millisecondsSinceEpoch,
+      };
+    }
+
+    if (_user != null && _quizQuestions.isNotEmpty) {
+      int totalAnswered = _quizQuestions.length;
       int wrongAnswers = totalAnswered - _correctAnswersCount;
-      DateTime now = DateTime.now();
 
-      // 1. Bu testin geçmişini kaydet
+      // 1. Kelime İlerlemelerini (Word Progress) Tek Seferde Kaydet
+      for (var entry in wordProgressUpdates.entries) {
+        await _dbRef
+            .child('Users/${_user.uid}/wordProgress/${entry.key}')
+            .set(entry.value);
+      }
+
+      // 2. Geçmişi Kaydet
       await _dbRef
-          .child(
-            'Users/${_user!.uid}/quizHistory/${now.millisecondsSinceEpoch}',
-          )
+          .child('Users/${_user.uid}/quizHistory/${now.millisecondsSinceEpoch}')
           .set({
             'date': now.toIso8601String(),
             'totalAnswered': totalAnswered,
@@ -91,8 +172,8 @@ class _QuizPageState extends State<QuizPage> {
             'wrongAnswers': wrongAnswers,
           });
 
-      // 2. Toplam ve Kategori Bazlı İstatistikleri (Stats) Güncelle
-      DatabaseReference statsRef = _dbRef.child('Users/${_user!.uid}/stats');
+      // 3. Genel İstatistikleri Güncelle
+      DatabaseReference statsRef = _dbRef.child('Users/${_user.uid}/stats');
       final snapshot = await statsRef.get();
 
       int currentTotal = 0;
@@ -110,7 +191,6 @@ class _QuizPageState extends State<QuizPage> {
         }
       }
 
-      // Kategori bazlı hesaplama
       Map<String, dynamic> updatedCategories = Map<String, dynamic>.from(
         currentCategories,
       );
@@ -135,24 +215,22 @@ class _QuizPageState extends State<QuizPage> {
         'totalQuestions': currentTotal + totalAnswered,
         'correctAnswers': currentCorrect + _correctAnswersCount,
         'wrongAnswers': currentWrong + wrongAnswers,
-        'categories':
-            updatedCategories, // Kategori istatistiklerini Firebase'e yazıyoruz
+        'categories': updatedCategories,
       });
     }
 
     setState(() {
+      _isLoading = false;
       _quizFinished = true;
     });
   }
 
-  // Firebase'den verileri çekip soruları oluşturan fonksiyon
   Future<void> _generateQuiz() async {
     if (_user == null) return;
 
     try {
-      // 1. Kullanıcı Ayarlarını Çek
       final settingsSnapshot = await _dbRef
-          .child('Users/${_user!.uid}/settings')
+          .child('Users/${_user.uid}/settings')
           .get();
       if (settingsSnapshot.exists) {
         Map<dynamic, dynamic> settings =
@@ -167,10 +245,9 @@ class _QuizPageState extends State<QuizPage> {
         }
       }
 
-      // 2. Kelimeleri ve Kullanıcı İlerlemesini Çek
       final wordsSnapshot = await _dbRef.child('words').get();
       final progressSnapshot = await _dbRef
-          .child('Users/${_user!.uid}/wordProgress')
+          .child('Users/${_user.uid}/wordProgress')
           .get();
 
       if (!wordsSnapshot.exists) {
@@ -199,7 +276,6 @@ class _QuizPageState extends State<QuizPage> {
           int nextReviewDate = progress['nextReviewDate'] ?? 0;
           int level = progress['level'] ?? 0;
 
-          // 6 kez bilinmediyse ve vakti geldiyse dueWords'e ekle
           if (level < 6 && now >= nextReviewDate) {
             dueWords.add({"id": wordId, ...value});
           }
@@ -212,9 +288,7 @@ class _QuizPageState extends State<QuizPage> {
       newWords.shuffle();
 
       List<Map<String, dynamic>> selectedWords = [];
-      // Önce vakti gelenleri ekle (Kullanıcının belirlediği soru limitine kadar)
       selectedWords.addAll(dueWords.take(_targetQuestionCount));
-      // Eğer limit dolmadıysa kalanını yeni kelimelerden tamamla
       if (selectedWords.length < _targetQuestionCount) {
         selectedWords.addAll(
           newWords.take(_targetQuestionCount - selectedWords.length),
@@ -228,7 +302,6 @@ class _QuizPageState extends State<QuizPage> {
         String correctTurkish = wordInfo['turkish'];
         List<String> options = [correctTurkish];
 
-        // 3 Tane rastgele yanlış şık seç
         while (options.length < 4) {
           String randomMeaning =
               allTurkishMeanings[random.nextInt(allTurkishMeanings.length)];
@@ -254,7 +327,6 @@ class _QuizPageState extends State<QuizPage> {
         _isLoading = false;
       });
 
-      // Yüklendiğinde süreyi başlat
       if (_quizQuestions.isNotEmpty) {
         _startTimer();
       }
@@ -264,61 +336,6 @@ class _QuizPageState extends State<QuizPage> {
     }
   }
 
-  // Kullanıcının verdiği cevabı işleyen fonksiyon
-  Future<void> _handleAnswer(
-    String selectedAnswer,
-    Map<String, dynamic> question,
-  ) async {
-    bool isCorrect = selectedAnswer == question['correctAnswer'];
-    if (isCorrect) _correctAnswersCount++;
-
-    // Sonucu listeye kaydet
-    _quizResults.add({
-      'english': question['english'],
-      'selectedAnswer': selectedAnswer,
-      'correctAnswer': question['correctAnswer'],
-      'isCorrect': isCorrect,
-      'category': question['category'],
-    });
-
-    int currentLevel = question['currentLevel'];
-    int newLevel;
-    int nextReviewDate;
-
-    DateTime now = DateTime.now();
-
-    if (isCorrect) {
-      newLevel = currentLevel + 1;
-      int daysToAdd = (currentLevel < _intervals.length)
-          ? _intervals[currentLevel]
-          : 365;
-      nextReviewDate = now
-          .add(Duration(days: daysToAdd))
-          .millisecondsSinceEpoch;
-    } else {
-      newLevel = 0;
-      nextReviewDate = now.add(const Duration(days: 1)).millisecondsSinceEpoch;
-    }
-
-    // Kelimenin ilerleme durumunu Firebase'e güncelle
-    await _dbRef
-        .child('Users/${_user!.uid}/wordProgress/${question['wordId']}')
-        .set({
-          'level': newLevel,
-          'nextReviewDate': nextReviewDate,
-          'lastAnswered': now.millisecondsSinceEpoch,
-        });
-
-    if (_currentIndex < _quizQuestions.length - 1) {
-      setState(() {
-        _currentIndex++;
-      });
-    } else {
-      _finishQuiz(); // Sorular bittiyse quizi bitir
-    }
-  }
-
-  // Cümle içindeki kelimenin altını çizen fonksiyon
   List<TextSpan> _buildUnderlinedText(String sentence, String targetWord) {
     String lowerSentence = sentence.toLowerCase();
     String lowerTarget = targetWord.toLowerCase();
@@ -340,7 +357,6 @@ class _QuizPageState extends State<QuizPage> {
     ];
   }
 
-  // Quiz bittiğinde gösterilecek olan sonuç ekranı
   Widget _buildResultScreen() {
     return Scaffold(
       appBar: AppBar(
@@ -379,12 +395,12 @@ class _QuizPageState extends State<QuizPage> {
           ),
           Expanded(
             child: ListView.builder(
-              physics:
-                  const ClampingScrollPhysics(), // Liste sonu esnemesini kapatır
+              physics: const ClampingScrollPhysics(),
               itemCount: _quizResults.length,
               itemBuilder: (context, index) {
                 var result = _quizResults[index];
                 bool isCorrect = result['isCorrect'];
+                bool isSkipped = result['selectedAnswer'] == "Boş Bırakıldı";
 
                 return Card(
                   margin: const EdgeInsets.symmetric(
@@ -393,8 +409,12 @@ class _QuizPageState extends State<QuizPage> {
                   ),
                   child: ListTile(
                     leading: Icon(
-                      isCorrect ? Icons.check_circle : Icons.cancel,
-                      color: isCorrect ? Colors.green : Colors.red,
+                      isCorrect
+                          ? Icons.check_circle
+                          : (isSkipped ? Icons.help_outline : Icons.cancel),
+                      color: isCorrect
+                          ? Colors.green
+                          : (isSkipped ? Colors.orange : Colors.red),
                       size: 36,
                     ),
                     title: Text(
@@ -411,9 +431,11 @@ class _QuizPageState extends State<QuizPage> {
                         if (!isCorrect)
                           Text(
                             'Senin Cevabın: ${result['selectedAnswer']}',
-                            style: const TextStyle(
-                              color: Colors.red,
-                              decoration: TextDecoration.lineThrough,
+                            style: TextStyle(
+                              color: isSkipped ? Colors.orange : Colors.red,
+                              decoration: isSkipped
+                                  ? TextDecoration.none
+                                  : TextDecoration.lineThrough,
                             ),
                           ),
                         Text(
@@ -476,12 +498,14 @@ class _QuizPageState extends State<QuizPage> {
 
     var currentQuestion = _quizQuestions[_currentIndex];
 
+    // Şu anki soruda hangi şıkkın seçili olduğunu kontrol et
+    String? currentSelectedOption = _selectedAnswers[_currentIndex];
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Soru ${_currentIndex + 1} / ${_quizQuestions.length}'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
-          // Sağ üstte geri sayım aracı (Limitsiz modda değilse göster)
           if (!_isUnlimitedTime)
             Center(
               child: Padding(
@@ -559,23 +583,75 @@ class _QuizPageState extends State<QuizPage> {
               ),
             ),
             const Spacer(flex: 2),
+
+            // ŞIKLAR BÖLÜMÜ
             ...(currentQuestion['options'] as List<String>).map((option) {
+              bool isSelected = option == currentSelectedOption;
+
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.all(16),
+                    backgroundColor: isSelected
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.surface,
+                    foregroundColor: isSelected
+                        ? Theme.of(context).colorScheme.onPrimary
+                        : Theme.of(context).colorScheme.onSurface,
+                    side: BorderSide(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                     textStyle: const TextStyle(fontSize: 18),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  onPressed: () => _handleAnswer(option, currentQuestion),
+                  onPressed: () => _selectAnswer(option),
                   child: Text(option),
                 ),
               );
             }),
+
             const Spacer(flex: 1),
+
+            // ALT MENÜ - İLERİ / GERİ BUTONLARI
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: _currentIndex > 0 ? _previousQuestion : null,
+                  icon: const Icon(Icons.arrow_back),
+                  label: const Text('Önceki'),
+                ),
+                ElevatedButton(
+                  onPressed: _nextQuestion,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _currentIndex == _quizQuestions.length - 1
+                        ? Colors.green
+                        : null,
+                    foregroundColor: _currentIndex == _quizQuestions.length - 1
+                        ? Colors.white
+                        : null,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _currentIndex == _quizQuestions.length - 1
+                            ? 'Testi Bitir'
+                            : 'Sonraki',
+                      ),
+                      if (_currentIndex < _quizQuestions.length - 1)
+                        const Padding(
+                          padding: EdgeInsets.only(left: 8.0),
+                          child: Icon(Icons.arrow_forward),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),

@@ -11,6 +11,8 @@ import 'addWords.dart';
 import 'quizSettings.dart';
 import 'stats.dart';
 import 'words.dart';
+import 'PrintReport.dart';
+import 'AIassistant.dart';
 
 // Global tema notifier
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
@@ -156,7 +158,6 @@ class _MyHomePageState extends State<MyHomePage> {
                     childAspectRatio: 1.1,
                     children: [
                       _buildModuleBox('Quiz Ol', Icons.quiz_rounded, () {
-                        // quiz.dart sayfasına yönlendirme
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -168,7 +169,6 @@ class _MyHomePageState extends State<MyHomePage> {
                         'Wordle Oyna',
                         Icons.grid_view_rounded,
                         () {
-                          // wordle.dart sayfasına yönlendirme
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -181,7 +181,6 @@ class _MyHomePageState extends State<MyHomePage> {
                         'Kelime Ekle',
                         Icons.add_circle_outline,
                         () {
-                          // addWords.dart sayfasına yönlendirme
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -194,7 +193,6 @@ class _MyHomePageState extends State<MyHomePage> {
                         'Quiz Ayarları',
                         Icons.settings_rounded,
                         () {
-                          // quizSettings.dart sayfasına yönlendirme
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -203,6 +201,28 @@ class _MyHomePageState extends State<MyHomePage> {
                           );
                         },
                       ),
+                      _buildModuleBox(
+                        'Analiz Raporu',
+                        Icons.analytics_outlined,
+                        () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              // Buradaki PrintReport kendi yazacağın sınıfa göre değişebilir
+                              builder: (context) => const PrintReport(),
+                            ),
+                          );
+                        },
+                      ),
+                      _buildModuleBox('AI Asistan', Icons.smart_toy_outlined, () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            // Buradaki AIassistant kendi yazacağın sınıfa göre değişebilir
+                            builder: (context) => const AIassistant(),
+                          ),
+                        );
+                      }),
                     ],
                   ),
                 ),
@@ -211,7 +231,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         );
       case 1:
-        return const WordsPage(); // Artık geçici yazı yerine gerçek sayfayı çağırıyoruz
+        return const WordsPage();
 
       case 2:
         return const StatsPage();
@@ -229,7 +249,6 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: _buildBody(),
-
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _changePage,

@@ -37,6 +37,8 @@ dependencies:
   firebase_database: ^11.0.2  # <--- BU SATIRI EKLE
   crypto: ^3.0.3
   cloud_firestore: ^5.0.2     # İstersen silebilirsin, ama kalsa da zarar vermez
+  pdf: ^3.11.1
+  printing: ^5.12.0
 
   # Diğer Paketler
   cupertino_icons: ^1.0.8
