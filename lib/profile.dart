@@ -44,10 +44,6 @@ class _ProfilePageState extends State<ProfilePage> {
     final isDark = themeNotifier.value == ThemeMode.dark;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Profil"),
-        backgroundColor: Colors.deepPurple,
-      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -134,7 +130,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                 },
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
-                                      vertical: 12),
+                                    vertical: 12,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: currentMode == ThemeMode.light
                                         ? Colors.deepPurple
@@ -179,7 +176,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                 },
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
-                                      vertical: 12),
+                                    vertical: 12,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: currentMode == ThemeMode.dark
                                         ? Colors.deepPurple
