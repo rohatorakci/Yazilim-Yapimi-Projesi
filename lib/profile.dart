@@ -13,7 +13,6 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin {
   String? _userName;
   bool _isLoading = true;
-  bool _themeExpanded = false;
 
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
@@ -56,7 +55,6 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
     await FirebaseAuth.instance.signOut();
   }
 
-  // Şifre Sıfırlama Fonksiyonu
   Future<void> _resetPassword() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null && user.email != null) {
@@ -120,58 +118,10 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
     );
   }
 
-  Widget _buildThemeSelector(ThemeMode currentMode) {
-    Widget item({required String title, required IconData icon, required ThemeMode mode}) {
-      final selected = currentMode == mode;
-      return Expanded(
-        child: GestureDetector(
-          onTap: () {
-            themeNotifier.value = mode;
-            setState(() {});
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 250),
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              color: selected ? Colors.deepPurple : Colors.grey.shade200,
-              border: Border.all(
-                color: selected ? Colors.deepPurple : Colors.grey.shade400,
-              ),
-            ),
-            child: Column(
-              children: [
-                Icon(icon, color: selected ? Colors.white : Colors.grey.shade700),
-                const SizedBox(height: 6),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: selected ? Colors.white : Colors.grey.shade700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      child: Row(
-        children: [
-          item(title: "Açık", icon: Icons.light_mode, mode: ThemeMode.light),
-          const SizedBox(width: 12),
-          item(title: "Koyu", icon: Icons.dark_mode, mode: ThemeMode.dark),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
+    // main.dart içindeki themeNotifier üzerinden mevcut modun kontrolü
     final isDark = themeNotifier.value == ThemeMode.dark;
 
     return Scaffold(
@@ -264,50 +214,6 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
               ),
 
               const SizedBox(height: 18),
-
-              // TEMA KARTI
-              Container(
-                margin: const EdgeInsets.only(bottom: 14),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  color: Theme.of(context).colorScheme.surfaceContainer,
-                ),
-                child: Column(
-                  children: [
-                    ListTile(
-                      leading: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.deepPurple.withOpacity(0.14),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.palette, color: Colors.deepPurple),
-                      ),
-                      title: const Text(
-                        "Tema",
-                        style: TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      trailing: AnimatedRotation(
-                        turns: _themeExpanded ? 0.5 : 0,
-                        duration: const Duration(milliseconds: 250),
-                        child: const Icon(Icons.keyboard_arrow_down),
-                      ),
-                      onTap: () {
-                        setState(() {
-                          _themeExpanded = !_themeExpanded;
-                        });
-                      },
-                    ),
-                    if (_themeExpanded)
-                      ValueListenableBuilder<ThemeMode>(
-                        valueListenable: themeNotifier,
-                        builder: (context, currentMode, _) {
-                          return _buildThemeSelector(currentMode);
-                        },
-                      ),
-                  ],
-                ),
-              ),
 
               // GÜVENLİK (ŞİFRE SIFIRLAMA)
               _buildMenuCard(

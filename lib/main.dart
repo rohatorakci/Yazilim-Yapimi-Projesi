@@ -127,60 +127,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     });
   }
 
-  // --- YENİ EKLENEN YARDIMCI WIDGETLAR ---
-
-  Widget _buildProgressCard(Color primaryColor) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: primaryColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: primaryColor.withOpacity(0.2)),
-      ),
-      child: Row(
-        children: [
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              SizedBox(
-                width: 50,
-                height: 50,
-                child: CircularProgressIndicator(
-                  value: 0.7, // Örnek veri
-                  backgroundColor: primaryColor.withOpacity(0.2),
-                  color: primaryColor,
-                  strokeWidth: 6,
-                  strokeCap: StrokeCap.round,
-                ),
-              ),
-              const Text("7/10",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-            ],
-          ),
-          const SizedBox(width: 15),
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Günlük Hedef",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              Text("3 kelime daha öğren!",
-                  style: TextStyle(fontSize: 13, color: Colors.grey)),
-            ],
-          ),
-          const Spacer(),
-          Column(
-            children: [
-              const Text("🔥", style: TextStyle(fontSize: 20)),
-              Text("5 Gün",
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, color: primaryColor)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildWordOfTheDay(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
@@ -352,10 +298,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                 ),
               ),
 
-              const SizedBox(height: 20),
-              _buildProgressCard(primary), // İlerleme Kartı
-              const SizedBox(height: 20),
-              _buildWordOfTheDay(context), // Günün Kelimesi
+              const SizedBox(height: 25),
+              _buildWordOfTheDay(context),
               const SizedBox(height: 25),
 
               // MODÜLLER BAŞLIĞI
@@ -421,25 +365,25 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildBody() {
-  switch (_selectedIndex) {
-    case 0:
-      return _buildHomePage();
-    case 1:
-      return FadeTransition(
-          opacity: _fadeAnimation, child: const WordsPage());
-    case 2:
-      return FadeTransition(
-          opacity: _fadeAnimation, child: const StatsPage());
-    case 3: // Yeni Sıralama Sekmesi
-      return FadeTransition(
-          opacity: _fadeAnimation, child: const LeaderboardPage());
-    case 4: // Profil bir yana kaydı
-      return FadeTransition(
-          opacity: _fadeAnimation, child: const ProfilePage());
-    default:
-      return const Center(child: Text("Sayfa bulunamadı"));
+    switch (_selectedIndex) {
+      case 0:
+        return _buildHomePage();
+      case 1:
+        return FadeTransition(
+            opacity: _fadeAnimation, child: const WordsPage());
+      case 2:
+        return FadeTransition(
+            opacity: _fadeAnimation, child: const StatsPage());
+      case 3:
+        return FadeTransition(
+            opacity: _fadeAnimation, child: const LeaderboardPage());
+      case 4:
+        return FadeTransition(
+            opacity: _fadeAnimation, child: const ProfilePage());
+      default:
+        return const Center(child: Text("Sayfa bulunamadı"));
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -456,10 +400,10 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             Icon(Icons.auto_stories_rounded,
                 color: Theme.of(context).colorScheme.primary),
             const SizedBox(width: 10),
-            Text("WordMaster",
+            const Text("WordMaster",
                 style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary)),
+                    color: Colors.deepPurple)),
           ],
         ),
         actions: [
@@ -476,38 +420,37 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       ),
       body: _buildBody(),
       bottomNavigationBar: NavigationBar(
-  selectedIndex: _selectedIndex,
-  onDestinationSelected: _changePage,
-  height: 70,
-  destinations: const [
-    NavigationDestination(
-      icon: Icon(Icons.home_outlined),
-      selectedIcon: Icon(Icons.home),
-      label: "Ana Sayfa",
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.menu_book_outlined),
-      selectedIcon: Icon(Icons.menu_book),
-      label: "Kelimeler",
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.bar_chart_outlined),
-      selectedIcon: Icon(Icons.bar_chart),
-      label: "İstatistik",
-    ),
-    // YENİ EKLENEN SEKME
-    NavigationDestination(
-      icon: Icon(Icons.leaderboard_outlined),
-      selectedIcon: Icon(Icons.leaderboard),
-      label: "Sıralama",
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.person_outline),
-      selectedIcon: Icon(Icons.person),
-      label: "Profil",
-    ),
-  ],
-),
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: _changePage,
+        height: 70,
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: "Ana Sayfa",
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.menu_book_outlined),
+            selectedIcon: Icon(Icons.menu_book),
+            label: "Kelimeler",
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.bar_chart_outlined),
+            selectedIcon: Icon(Icons.bar_chart),
+            label: "İstatistik",
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.leaderboard_outlined),
+            selectedIcon: Icon(Icons.leaderboard),
+            label: "Sıralama",
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: "Profil",
+          ),
+        ],
+      ),
     );
   }
 }
