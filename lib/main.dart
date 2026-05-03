@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+
 import 'firebase_options.dart';
 import 'login.dart';
 import 'profile.dart';
@@ -15,11 +16,16 @@ import 'PrintReport.dart';
 import 'AIassistant.dart';
 
 // Global tema notifier
-final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
+final ValueNotifier<ThemeMode> themeNotifier =
+    ValueNotifier(ThemeMode.light);
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   FirebaseDatabase.instance.databaseURL =
       "https://yazilim-yapimi-eb2a5-default-rtdb.europe-west1.firebasedatabase.app/";
 
@@ -35,13 +41,18 @@ class MyApp extends StatelessWidget {
       valueListenable: themeNotifier,
       builder: (context, mode, _) {
         return MaterialApp(
-          title: 'Kelime Ezberleme Uygulaması',
           debugShowCheckedModeBanner: false,
+          title: "Kelime Ezberleme Uygulaması",
+
           themeMode: mode,
+
           theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: Colors.deepPurple,
+            ),
             useMaterial3: true,
           ),
+
           darkTheme: ThemeData(
             colorScheme: ColorScheme.fromSeed(
               seedColor: Colors.deepPurple,
@@ -49,6 +60,7 @@ class MyApp extends StatelessWidget {
             ),
             useMaterial3: true,
           ),
+
           home: const AuthWrapper(),
         );
       },
@@ -62,15 +74,24 @@ class AuthWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
+      stream:
+          FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        if (snapshot.connectionState ==
+            ConnectionState.waiting) {
           return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+            body: Center(
+              child:
+                  CircularProgressIndicator(),
+            ),
           );
         }
+
         if (snapshot.hasData) {
-          return const MyHomePage(title: 'Kelime Ezberleme Ana Sayfa');
+          return const MyHomePage(
+            title:
+                "Kelime Ezberleme Ana Sayfa",
+          );
         } else {
           return const LoginPage();
         }
@@ -80,59 +101,458 @@ class AuthWrapper extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+  const MyHomePage({
+    super.key,
+    required this.title,
+  });
+
   final String title;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<MyHomePage> createState() =>
+      _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage>
+    with TickerProviderStateMixin {
   int _selectedIndex = 0;
 
-  void _changePage(int index) {
-    setState(() => _selectedIndex = index);
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _fadeController = AnimationController(
+      vsync: this,
+      duration:
+          const Duration(milliseconds: 550),
+    );
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeOut,
+    );
+
+    _fadeController.forward();
   }
 
-  // Modül kutularını oluşturan yardımcı fonksiyon
-  Widget _buildModuleBox(String title, IconData icon, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(
-            context,
-          ).colorScheme.primaryContainer.withOpacity(0.7),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-            width: 2,
-          ),
-          boxShadow: [
-            BoxShadow(
-              // ignore: deprecated_member_use
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(2, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 48, color: Theme.of(context).colorScheme.primary),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onPrimaryContainer,
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    super.dispose();
+  }
+
+  void _changePage(int index) {
+    setState(() {
+      _selectedIndex = index;
+
+      _fadeController.reset();
+      _fadeController.forward();
+    });
+  }
+
+  // MODÜL KARTI
+  Widget _buildModuleBox(
+    String title,
+    IconData icon,
+    VoidCallback onTap,
+    Color color,
+    int delay,
+  ) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration:
+          Duration(milliseconds: 400 + delay),
+      curve: Curves.easeOutBack,
+      builder: (context, value, child) {
+        return Transform.scale(
+          scale: value,
+          child: child,
+        );
+      },
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius:
+              BorderRadius.circular(22),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius:
+                  BorderRadius.circular(22),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  color.withOpacity(0.16),
+                  color.withOpacity(0.05),
+                ],
               ),
+              border: Border.all(
+                color:
+                    color.withOpacity(0.28),
+                width: 1.3,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color:
+                      color.withOpacity(0.12),
+                  blurRadius: 14,
+                  offset:
+                      const Offset(0, 6),
+                ),
+              ],
             ),
-          ],
+            child: Column(
+              mainAxisAlignment:
+                  MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.all(
+                          14),
+                  decoration:
+                      BoxDecoration(
+                    color: color.withOpacity(
+                        0.14),
+                    shape:
+                        BoxShape.circle,
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 30,
+                    color: color,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(
+                    horizontal: 8,
+                  ),
+                  child: Text(
+                    title,
+                    textAlign:
+                        TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight:
+                          FontWeight.w700,
+                      color: Theme.of(
+                              context)
+                          .colorScheme
+                          .onSurface,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHomePage() {
+    final user =
+        FirebaseAuth.instance.currentUser;
+
+    final displayName =
+        user?.displayName ??
+            user?.email
+                ?.split('@')
+                .first ??
+            "Kullanıcı";
+
+    final isDark =
+        Theme.of(context).brightness ==
+            Brightness.dark;
+
+    final primary =
+        Theme.of(context).colorScheme.primary;
+
+    return SafeArea(
+      child: FadeTransition(
+        opacity: _fadeAnimation,
+        child: SingleChildScrollView(
+          padding:
+              const EdgeInsets.symmetric(
+            horizontal: 18,
+            vertical: 10,
+          ),
+          child: Column(
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 12),
+
+              // HEADER
+              Container(
+                width: double.infinity,
+                padding:
+                    const EdgeInsets.all(
+                        24),
+                decoration:
+                    BoxDecoration(
+                  borderRadius:
+                      BorderRadius.circular(
+                          26),
+                  gradient:
+                      LinearGradient(
+                    colors: isDark
+                        ? [
+                            Colors
+                                .deepPurple
+                                .shade800,
+                            Colors
+                                .deepPurple
+                                .shade600,
+                          ]
+                        : [
+                            Colors
+                                .deepPurple
+                                .shade400,
+                            Colors
+                                .deepPurple
+                                .shade700,
+                          ],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors
+                          .deepPurple
+                          .withOpacity(
+                              0.32),
+                      blurRadius: 18,
+                      offset:
+                          const Offset(
+                              0, 8),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment:
+                            CrossAxisAlignment
+                                .start,
+                        children: [
+                          Text(
+                            "Hoş Geldin 👋",
+                            style:
+                                TextStyle(
+                              color: Colors
+                                  .white
+                                  .withOpacity(
+                                      0.8),
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(
+                              height: 6),
+                          Text(
+                            displayName,
+                            style:
+                                const TextStyle(
+                              color: Colors
+                                  .white,
+                              fontSize: 24,
+                              fontWeight:
+                                  FontWeight
+                                      .bold,
+                            ),
+                            overflow:
+                                TextOverflow
+                                    .ellipsis,
+                          ),
+                          const SizedBox(
+                              height: 8),
+                          Text(
+                            "Bugün ne öğrenmek istersin?",
+                            style:
+                                TextStyle(
+                              color: Colors
+                                  .white
+                                  .withOpacity(
+                                      0.75),
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding:
+                          const EdgeInsets
+                              .all(14),
+                      decoration:
+                          BoxDecoration(
+                        color: Colors.white
+                            .withOpacity(
+                                0.15),
+                        shape:
+                            BoxShape.circle,
+                      ),
+                      child: const Text(
+                        "📚",
+                        style: TextStyle(
+                          fontSize: 28,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 28),
+
+              // BAŞLIK
+              Row(
+                children: [
+                  Container(
+                    width: 4,
+                    height: 20,
+                    decoration:
+                        BoxDecoration(
+                      color: primary,
+                      borderRadius:
+                          BorderRadius
+                              .circular(
+                                  5),
+                    ),
+                  ),
+                  const SizedBox(
+                      width: 10),
+                  const Text(
+                    "Modüller",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight:
+                          FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              GridView.count(
+                physics:
+                    const NeverScrollableScrollPhysics(),
+                shrinkWrap: true,
+                crossAxisCount: 2,
+                crossAxisSpacing: 14,
+                mainAxisSpacing: 14,
+                childAspectRatio: 1.05,
+                children: [
+                  _buildModuleBox(
+                    "Quiz Ol",
+                    Icons.quiz_rounded,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              const QuizPage(),
+                        ),
+                      );
+                    },
+                    Colors.deepPurple,
+                    0,
+                  ),
+
+                  _buildModuleBox(
+                    "Wordle Oyna",
+                    Icons.grid_view_rounded,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              const WordlePage(),
+                        ),
+                      );
+                    },
+                    Colors.teal,
+                    80,
+                  ),
+
+                  _buildModuleBox(
+                    "Kelime Ekle",
+                    Icons
+                        .add_circle_outline,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              const AddWordsPage(),
+                        ),
+                      );
+                    },
+                    Colors.orange,
+                    160,
+                  ),
+
+                  _buildModuleBox(
+                    "Quiz Ayarları",
+                    Icons
+                        .settings_rounded,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              const QuizSettingsPage(),
+                        ),
+                      );
+                    },
+                    Colors.indigo,
+                    240,
+                  ),
+
+                  _buildModuleBox(
+                    "Analiz Raporu",
+                    Icons
+                        .analytics_outlined,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              const PrintReport(),
+                        ),
+                      );
+                    },
+                    Colors.green,
+                    320,
+                  ),
+
+                  _buildModuleBox(
+                    "AI Asistan",
+                    Icons
+                        .smart_toy_outlined,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              const AIassistant(),
+                        ),
+                      );
+                    },
+                    Colors.redAccent,
+                    400,
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
     );
@@ -141,131 +561,140 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget _buildBody() {
     switch (_selectedIndex) {
       case 0:
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 30),
-                Expanded(
-                  child: GridView.count(
-                    physics:
-                        const NeverScrollableScrollPhysics(), // ESNEKLİĞİ VE KAYDIRMAYI KAPATAN KOD
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 1.1,
-                    children: [
-                      _buildModuleBox('Quiz Ol', Icons.quiz_rounded, () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const QuizPage(),
-                          ),
-                        );
-                      }),
-                      _buildModuleBox(
-                        'Wordle Oyna',
-                        Icons.grid_view_rounded,
-                        () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const WordlePage(),
-                            ),
-                          );
-                        },
-                      ),
-                      _buildModuleBox(
-                        'Kelime Ekle',
-                        Icons.add_circle_outline,
-                        () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const AddWordsPage(),
-                            ),
-                          );
-                        },
-                      ),
-                      _buildModuleBox(
-                        'Quiz Ayarları',
-                        Icons.settings_rounded,
-                        () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const QuizSettingsPage(),
-                            ),
-                          );
-                        },
-                      ),
-                      _buildModuleBox(
-                        'Analiz Raporu',
-                        Icons.analytics_outlined,
-                        () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              // Buradaki PrintReport kendi yazacağın sınıfa göre değişebilir
-                              builder: (context) => const PrintReport(),
-                            ),
-                          );
-                        },
-                      ),
-                      _buildModuleBox('AI Asistan', Icons.smart_toy_outlined, () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            // Buradaki AIassistant kendi yazacağın sınıfa göre değişebilir
-                            builder: (context) => const AIassistant(),
-                          ),
-                        );
-                      }),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
+        return _buildHomePage();
+
       case 1:
-        return const WordsPage();
+        return FadeTransition(
+          opacity: _fadeAnimation,
+          child: const WordsPage(),
+        );
 
       case 2:
-        return const StatsPage();
+        return FadeTransition(
+          opacity: _fadeAnimation,
+          child: const StatsPage(),
+        );
+
       case 3:
-        return const ProfilePage();
+        return FadeTransition(
+          opacity: _fadeAnimation,
+          child: const ProfilePage(),
+        );
+
       default:
-        return const Center(child: Text('Sayfa bulunamadı'));
+        return const Center(
+          child:
+              Text("Sayfa bulunamadı"),
+        );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark =
+        Theme.of(context).brightness ==
+            Brightness.dark;
+
     return Scaffold(
+      backgroundColor:
+          Theme.of(context)
+              .colorScheme
+              .surface,
+
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor:
+            Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        title: Row(
+          children: [
+            Icon(
+              Icons.auto_stories_rounded,
+              color:
+                  Theme.of(context)
+                      .colorScheme
+                      .primary,
+            ),
+            const SizedBox(width: 10),
+            Text(
+              "WordMaster",
+              style: TextStyle(
+                fontWeight:
+                    FontWeight.bold,
+                color:
+                    Theme.of(context)
+                        .colorScheme
+                        .primary,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(
+              isDark
+                  ? Icons
+                      .light_mode_rounded
+                  : Icons
+                      .dark_mode_rounded,
+              color:
+                  Theme.of(context)
+                      .colorScheme
+                      .primary,
+            ),
+            onPressed: () {
+              themeNotifier.value =
+                  isDark
+                      ? ThemeMode
+                          .light
+                      : ThemeMode
+                          .dark;
+            },
+          ),
+        ],
       ),
+
       body: _buildBody(),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: _changePage,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: Theme.of(context).colorScheme.primary,
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Ana Sayfa'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.menu_book),
-            label: 'Kelimeler',
+
+      bottomNavigationBar:
+          NavigationBar(
+        selectedIndex:
+            _selectedIndex,
+        onDestinationSelected:
+            _changePage,
+        height: 70,
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(
+                Icons
+                    .home_outlined),
+            selectedIcon:
+                Icon(Icons.home),
+            label:
+                "Ana Sayfa",
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart),
-            label: 'İstatistik',
+          NavigationDestination(
+            icon: Icon(Icons
+                .menu_book_outlined),
+            selectedIcon: Icon(
+                Icons.menu_book),
+            label: "Kelimeler",
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
+          NavigationDestination(
+            icon: Icon(Icons
+                .bar_chart_outlined),
+            selectedIcon: Icon(
+                Icons.bar_chart),
+            label:
+                "İstatistik",
+          ),
+          NavigationDestination(
+            icon: Icon(Icons
+                .person_outline),
+            selectedIcon:
+                Icon(Icons.person),
+            label: "Profil",
+          ),
         ],
       ),
     );
