@@ -16,8 +16,7 @@ import 'PrintReport.dart';
 import 'AIassistant.dart';
 
 // Global tema notifier
-final ValueNotifier<ThemeMode> themeNotifier =
-    ValueNotifier(ThemeMode.light);
+final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,16 +42,11 @@ class MyApp extends StatelessWidget {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           title: "Kelime Ezberleme Uygulaması",
-
           themeMode: mode,
-
           theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: Colors.deepPurple,
-            ),
+            colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
             useMaterial3: true,
           ),
-
           darkTheme: ThemeData(
             colorScheme: ColorScheme.fromSeed(
               seedColor: Colors.deepPurple,
@@ -60,7 +54,6 @@ class MyApp extends StatelessWidget {
             ),
             useMaterial3: true,
           ),
-
           home: const AuthWrapper(),
         );
       },
@@ -74,24 +67,16 @@ class AuthWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
-      stream:
-          FirebaseAuth.instance.authStateChanges(),
+      stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
-        if (snapshot.connectionState ==
-            ConnectionState.waiting) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
-            body: Center(
-              child:
-                  CircularProgressIndicator(),
-            ),
+            body: Center(child: CircularProgressIndicator()),
           );
         }
 
         if (snapshot.hasData) {
-          return const MyHomePage(
-            title:
-                "Kelime Ezberleme Ana Sayfa",
-          );
+          return const MyHomePage(title: "Kelime Ezberleme Ana Sayfa");
         } else {
           return const LoginPage();
         }
@@ -101,40 +86,29 @@ class AuthWrapper extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({
-    super.key,
-    required this.title,
-  });
-
+  const MyHomePage({super.key, required this.title});
   final String title;
 
   @override
-  State<MyHomePage> createState() =>
-      _MyHomePageState();
+  State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage>
-    with TickerProviderStateMixin {
+class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   int _selectedIndex = 0;
-
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
-
     _fadeController = AnimationController(
       vsync: this,
-      duration:
-          const Duration(milliseconds: 550),
+      duration: const Duration(milliseconds: 550),
     );
-
     _fadeAnimation = CurvedAnimation(
       parent: _fadeController,
       curve: Curves.easeOut,
     );
-
     _fadeController.forward();
   }
 
@@ -147,13 +121,106 @@ class _MyHomePageState extends State<MyHomePage>
   void _changePage(int index) {
     setState(() {
       _selectedIndex = index;
-
       _fadeController.reset();
       _fadeController.forward();
     });
   }
 
-  // MODÜL KARTI
+  // --- YENİ EKLENEN YARDIMCI WIDGETLAR ---
+
+  Widget _buildProgressCard(Color primaryColor) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: primaryColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: primaryColor.withOpacity(0.2)),
+      ),
+      child: Row(
+        children: [
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              SizedBox(
+                width: 50,
+                height: 50,
+                child: CircularProgressIndicator(
+                  value: 0.7, // Örnek veri
+                  backgroundColor: primaryColor.withOpacity(0.2),
+                  color: primaryColor,
+                  strokeWidth: 6,
+                  strokeCap: StrokeCap.round,
+                ),
+              ),
+              const Text("7/10",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+            ],
+          ),
+          const SizedBox(width: 15),
+          const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("Günlük Hedef",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              Text("3 kelime daha öğren!",
+                  style: TextStyle(fontSize: 13, color: Colors.grey)),
+            ],
+          ),
+          const Spacer(),
+          Column(
+            children: [
+              const Text("🔥", style: TextStyle(fontSize: 20)),
+              Text("5 Gün",
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: primaryColor)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWordOfTheDay(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        color: isDark ? Colors.grey[900] : Colors.grey[100],
+        border: Border.all(color: Colors.grey.withOpacity(0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text("Günün Kelimesi",
+                  style: TextStyle(
+                      color: Colors.deepPurple,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14)),
+              Icon(Icons.lightbulb_outline, color: Colors.amber, size: 20),
+            ],
+          ),
+          const SizedBox(height: 10),
+          const Text("Persistent",
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          const Text("Israrcı, kalıcı",
+              style: TextStyle(fontSize: 16, color: Colors.grey)),
+          const Divider(height: 25),
+          Text(
+            "\"Success is the result of persistent effort.\"",
+            style: TextStyle(
+                fontStyle: FontStyle.italic,
+                color: isDark ? Colors.grey[400] : Colors.blueGrey),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildModuleBox(
     String title,
     IconData icon,
@@ -163,25 +230,19 @@ class _MyHomePageState extends State<MyHomePage>
   ) {
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
-      duration:
-          Duration(milliseconds: 400 + delay),
+      duration: Duration(milliseconds: 400 + delay),
       curve: Curves.easeOutBack,
       builder: (context, value, child) {
-        return Transform.scale(
-          scale: value,
-          child: child,
-        );
+        return Transform.scale(scale: value, child: child);
       },
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius:
-              BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(22),
           child: Container(
             decoration: BoxDecoration(
-              borderRadius:
-                  BorderRadius.circular(22),
+              borderRadius: BorderRadius.circular(22),
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -190,61 +251,34 @@ class _MyHomePageState extends State<MyHomePage>
                   color.withOpacity(0.05),
                 ],
               ),
-              border: Border.all(
-                color:
-                    color.withOpacity(0.28),
-                width: 1.3,
-              ),
+              border: Border.all(color: color.withOpacity(0.28), width: 1.3),
               boxShadow: [
                 BoxShadow(
-                  color:
-                      color.withOpacity(0.12),
+                  color: color.withOpacity(0.12),
                   blurRadius: 14,
-                  offset:
-                      const Offset(0, 6),
+                  offset: const Offset(0, 6),
                 ),
               ],
             ),
             child: Column(
-              mainAxisAlignment:
-                  MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  padding:
-                      const EdgeInsets.all(
-                          14),
-                  decoration:
-                      BoxDecoration(
-                    color: color.withOpacity(
-                        0.14),
-                    shape:
-                        BoxShape.circle,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.14),
+                    shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    icon,
-                    size: 30,
-                    color: color,
-                  ),
+                  child: Icon(icon, size: 30, color: color),
                 ),
                 const SizedBox(height: 12),
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(
-                    horizontal: 8,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Text(
                     title,
-                    textAlign:
-                        TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight:
-                          FontWeight.w700,
-                      color: Theme.of(
-                              context)
-                          .colorScheme
-                          .onSurface,
-                    ),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        fontSize: 15, fontWeight: FontWeight.w700),
                   ),
                 ),
               ],
@@ -256,79 +290,39 @@ class _MyHomePageState extends State<MyHomePage>
   }
 
   Widget _buildHomePage() {
-    final user =
-        FirebaseAuth.instance.currentUser;
-
-    final displayName =
-        user?.displayName ??
-            user?.email
-                ?.split('@')
-                .first ??
-            "Kullanıcı";
-
-    final isDark =
-        Theme.of(context).brightness ==
-            Brightness.dark;
-
-    final primary =
-        Theme.of(context).colorScheme.primary;
+    final user = FirebaseAuth.instance.currentUser;
+    final displayName = user?.displayName ??
+        user?.email?.split('@').first ??
+        "Kullanıcı";
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primary = Theme.of(context).colorScheme.primary;
 
     return SafeArea(
       child: FadeTransition(
         opacity: _fadeAnimation,
         child: SingleChildScrollView(
-          padding:
-              const EdgeInsets.symmetric(
-            horizontal: 18,
-            vertical: 10,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
           child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 12),
 
               // HEADER
               Container(
                 width: double.infinity,
-                padding:
-                    const EdgeInsets.all(
-                        24),
-                decoration:
-                    BoxDecoration(
-                  borderRadius:
-                      BorderRadius.circular(
-                          26),
-                  gradient:
-                      LinearGradient(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(26),
+                  gradient: LinearGradient(
                     colors: isDark
-                        ? [
-                            Colors
-                                .deepPurple
-                                .shade800,
-                            Colors
-                                .deepPurple
-                                .shade600,
-                          ]
-                        : [
-                            Colors
-                                .deepPurple
-                                .shade400,
-                            Colors
-                                .deepPurple
-                                .shade700,
-                          ],
+                        ? [Colors.deepPurple.shade800, Colors.deepPurple.shade600]
+                        : [Colors.deepPurple.shade400, Colors.deepPurple.shade700],
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors
-                          .deepPurple
-                          .withOpacity(
-                              0.32),
+                      color: Colors.deepPurple.withOpacity(0.32),
                       blurRadius: 18,
-                      offset:
-                          const Offset(
-                              0, 8),
+                      offset: const Offset(0, 8),
                     ),
                   ],
                 ),
@@ -336,220 +330,87 @@ class _MyHomePageState extends State<MyHomePage>
                   children: [
                     Expanded(
                       child: Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment
-                                .start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            "Hoş Geldin 👋",
-                            style:
-                                TextStyle(
-                              color: Colors
-                                  .white
-                                  .withOpacity(
-                                      0.8),
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(
-                              height: 6),
-                          Text(
-                            displayName,
-                            style:
-                                const TextStyle(
-                              color: Colors
-                                  .white,
-                              fontSize: 24,
-                              fontWeight:
-                                  FontWeight
-                                      .bold,
-                            ),
-                            overflow:
-                                TextOverflow
-                                    .ellipsis,
-                          ),
-                          const SizedBox(
-                              height: 8),
-                          Text(
-                            "Bugün ne öğrenmek istersin?",
-                            style:
-                                TextStyle(
-                              color: Colors
-                                  .white
-                                  .withOpacity(
-                                      0.75),
-                              fontSize: 13,
-                            ),
-                          ),
+                          Text("Hoş Geldin 👋",
+                              style: TextStyle(
+                                  color: Colors.white.withOpacity(0.8),
+                                  fontSize: 14)),
+                          const SizedBox(height: 6),
+                          Text(displayName,
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold),
+                              overflow: TextOverflow.ellipsis),
                         ],
                       ),
                     ),
-                    Container(
-                      padding:
-                          const EdgeInsets
-                              .all(14),
-                      decoration:
-                          BoxDecoration(
-                        color: Colors.white
-                            .withOpacity(
-                                0.15),
-                        shape:
-                            BoxShape.circle,
-                      ),
-                      child: const Text(
-                        "📚",
-                        style: TextStyle(
-                          fontSize: 28,
-                        ),
-                      ),
-                    ),
+                    const Text("📚", style: TextStyle(fontSize: 35)),
                   ],
                 ),
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 20),
+              _buildProgressCard(primary), // İlerleme Kartı
+              const SizedBox(height: 20),
+              _buildWordOfTheDay(context), // Günün Kelimesi
+              const SizedBox(height: 25),
 
-              // BAŞLIK
+              // MODÜLLER BAŞLIĞI
               Row(
                 children: [
                   Container(
                     width: 4,
                     height: 20,
-                    decoration:
-                        BoxDecoration(
-                      color: primary,
-                      borderRadius:
-                          BorderRadius
-                              .circular(
-                                  5),
-                    ),
+                    decoration: BoxDecoration(
+                        color: primary, borderRadius: BorderRadius.circular(5)),
                   ),
-                  const SizedBox(
-                      width: 10),
-                  const Text(
-                    "Modüller",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight:
-                          FontWeight.bold,
-                    ),
-                  ),
+                  const SizedBox(width: 10),
+                  const Text("Modüller",
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 ],
               ),
 
               const SizedBox(height: 16),
 
               GridView.count(
-                physics:
-                    const NeverScrollableScrollPhysics(),
+                physics: const NeverScrollableScrollPhysics(),
                 shrinkWrap: true,
                 crossAxisCount: 2,
                 crossAxisSpacing: 14,
                 mainAxisSpacing: 14,
                 childAspectRatio: 1.05,
                 children: [
-                  _buildModuleBox(
-                    "Quiz Ol",
-                    Icons.quiz_rounded,
-                    () {
-                      Navigator.push(
+                  _buildModuleBox("Quiz Ol", Icons.quiz_rounded, () {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (_) => const QuizPage()));
+                  }, Colors.deepPurple, 0),
+                  _buildModuleBox("Wordle Oyna", Icons.grid_view_rounded, () {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (_) => const WordlePage()));
+                  }, Colors.teal, 80),
+                  _buildModuleBox("Kelime Ekle", Icons.add_circle_outline, () {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (_) => const AddWordsPage()));
+                  }, Colors.orange, 160),
+                  _buildModuleBox("Quiz Ayarları", Icons.settings_rounded, () {
+                    Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) =>
-                              const QuizPage(),
-                        ),
-                      );
-                    },
-                    Colors.deepPurple,
-                    0,
-                  ),
-
-                  _buildModuleBox(
-                    "Wordle Oyna",
-                    Icons.grid_view_rounded,
-                    () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              const WordlePage(),
-                        ),
-                      );
-                    },
-                    Colors.teal,
-                    80,
-                  ),
-
-                  _buildModuleBox(
-                    "Kelime Ekle",
-                    Icons
-                        .add_circle_outline,
-                    () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              const AddWordsPage(),
-                        ),
-                      );
-                    },
-                    Colors.orange,
-                    160,
-                  ),
-
-                  _buildModuleBox(
-                    "Quiz Ayarları",
-                    Icons
-                        .settings_rounded,
-                    () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              const QuizSettingsPage(),
-                        ),
-                      );
-                    },
-                    Colors.indigo,
-                    240,
-                  ),
-
-                  _buildModuleBox(
-                    "Analiz Raporu",
-                    Icons
-                        .analytics_outlined,
-                    () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              const PrintReport(),
-                        ),
-                      );
-                    },
-                    Colors.green,
-                    320,
-                  ),
-
-                  _buildModuleBox(
-                    "AI Asistan",
-                    Icons
-                        .smart_toy_outlined,
-                    () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              const AIassistant(),
-                        ),
-                      );
-                    },
-                    Colors.redAccent,
-                    400,
-                  ),
+                            builder: (_) => const QuizSettingsPage()));
+                  }, Colors.indigo, 240),
+                  _buildModuleBox("Analiz Raporu", Icons.analytics_outlined, () {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (_) => const PrintReport()));
+                  }, Colors.green, 320),
+                  _buildModuleBox("AI Asistan", Icons.smart_toy_outlined, () {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (_) => const AIassistant()));
+                  }, Colors.redAccent, 400),
                 ],
               ),
-
               const SizedBox(height: 20),
             ],
           ),
@@ -562,137 +423,77 @@ class _MyHomePageState extends State<MyHomePage>
     switch (_selectedIndex) {
       case 0:
         return _buildHomePage();
-
       case 1:
         return FadeTransition(
-          opacity: _fadeAnimation,
-          child: const WordsPage(),
-        );
-
+            opacity: _fadeAnimation, child: const WordsPage());
       case 2:
         return FadeTransition(
-          opacity: _fadeAnimation,
-          child: const StatsPage(),
-        );
-
+            opacity: _fadeAnimation, child: const StatsPage());
       case 3:
         return FadeTransition(
-          opacity: _fadeAnimation,
-          child: const ProfilePage(),
-        );
-
+            opacity: _fadeAnimation, child: const ProfilePage());
       default:
-        return const Center(
-          child:
-              Text("Sayfa bulunamadı"),
-        );
+        return const Center(child: Text("Sayfa bulunamadı"));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark =
-        Theme.of(context).brightness ==
-            Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor:
-          Theme.of(context)
-              .colorScheme
-              .surface,
-
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        backgroundColor:
-            Colors.transparent,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         title: Row(
           children: [
-            Icon(
-              Icons.auto_stories_rounded,
-              color:
-                  Theme.of(context)
-                      .colorScheme
-                      .primary,
-            ),
+            Icon(Icons.auto_stories_rounded,
+                color: Theme.of(context).colorScheme.primary),
             const SizedBox(width: 10),
-            Text(
-              "WordMaster",
-              style: TextStyle(
-                fontWeight:
-                    FontWeight.bold,
-                color:
-                    Theme.of(context)
-                        .colorScheme
-                        .primary,
-              ),
-            ),
+            Text("WordMaster",
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.primary)),
           ],
         ),
         actions: [
           IconButton(
             icon: Icon(
-              isDark
-                  ? Icons
-                      .light_mode_rounded
-                  : Icons
-                      .dark_mode_rounded,
-              color:
-                  Theme.of(context)
-                      .colorScheme
-                      .primary,
-            ),
+                isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                color: Theme.of(context).colorScheme.primary),
             onPressed: () {
               themeNotifier.value =
-                  isDark
-                      ? ThemeMode
-                          .light
-                      : ThemeMode
-                          .dark;
+                  isDark ? ThemeMode.light : ThemeMode.dark;
             },
           ),
         ],
       ),
-
       body: _buildBody(),
-
-      bottomNavigationBar:
-          NavigationBar(
-        selectedIndex:
-            _selectedIndex,
-        onDestinationSelected:
-            _changePage,
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: _changePage,
         height: 70,
         destinations: const [
           NavigationDestination(
-            icon: Icon(
-                Icons
-                    .home_outlined),
-            selectedIcon:
-                Icon(Icons.home),
-            label:
-                "Ana Sayfa",
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: "Ana Sayfa",
           ),
           NavigationDestination(
-            icon: Icon(Icons
-                .menu_book_outlined),
-            selectedIcon: Icon(
-                Icons.menu_book),
+            icon: Icon(Icons.menu_book_outlined),
+            selectedIcon: Icon(Icons.menu_book),
             label: "Kelimeler",
           ),
           NavigationDestination(
-            icon: Icon(Icons
-                .bar_chart_outlined),
-            selectedIcon: Icon(
-                Icons.bar_chart),
-            label:
-                "İstatistik",
+            icon: Icon(Icons.bar_chart_outlined),
+            selectedIcon: Icon(Icons.bar_chart),
+            label: "İstatistik",
           ),
           NavigationDestination(
-            icon: Icon(Icons
-                .person_outline),
-            selectedIcon:
-                Icon(Icons.person),
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
             label: "Profil",
           ),
         ],
