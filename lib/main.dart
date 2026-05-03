@@ -14,6 +14,7 @@ import 'stats.dart';
 import 'words.dart';
 import 'PrintReport.dart';
 import 'AIassistant.dart';
+import 'leaderboard.dart';
 
 // Global tema notifier
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
@@ -420,22 +421,25 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildBody() {
-    switch (_selectedIndex) {
-      case 0:
-        return _buildHomePage();
-      case 1:
-        return FadeTransition(
-            opacity: _fadeAnimation, child: const WordsPage());
-      case 2:
-        return FadeTransition(
-            opacity: _fadeAnimation, child: const StatsPage());
-      case 3:
-        return FadeTransition(
-            opacity: _fadeAnimation, child: const ProfilePage());
-      default:
-        return const Center(child: Text("Sayfa bulunamadı"));
-    }
+  switch (_selectedIndex) {
+    case 0:
+      return _buildHomePage();
+    case 1:
+      return FadeTransition(
+          opacity: _fadeAnimation, child: const WordsPage());
+    case 2:
+      return FadeTransition(
+          opacity: _fadeAnimation, child: const StatsPage());
+    case 3: // Yeni Sıralama Sekmesi
+      return FadeTransition(
+          opacity: _fadeAnimation, child: const LeaderboardPage());
+    case 4: // Profil bir yana kaydı
+      return FadeTransition(
+          opacity: _fadeAnimation, child: const ProfilePage());
+    default:
+      return const Center(child: Text("Sayfa bulunamadı"));
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -472,32 +476,38 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       ),
       body: _buildBody(),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: _changePage,
-        height: 70,
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: "Ana Sayfa",
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.menu_book_outlined),
-            selectedIcon: Icon(Icons.menu_book),
-            label: "Kelimeler",
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.bar_chart_outlined),
-            selectedIcon: Icon(Icons.bar_chart),
-            label: "İstatistik",
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: "Profil",
-          ),
-        ],
-      ),
+  selectedIndex: _selectedIndex,
+  onDestinationSelected: _changePage,
+  height: 70,
+  destinations: const [
+    NavigationDestination(
+      icon: Icon(Icons.home_outlined),
+      selectedIcon: Icon(Icons.home),
+      label: "Ana Sayfa",
+    ),
+    NavigationDestination(
+      icon: Icon(Icons.menu_book_outlined),
+      selectedIcon: Icon(Icons.menu_book),
+      label: "Kelimeler",
+    ),
+    NavigationDestination(
+      icon: Icon(Icons.bar_chart_outlined),
+      selectedIcon: Icon(Icons.bar_chart),
+      label: "İstatistik",
+    ),
+    // YENİ EKLENEN SEKME
+    NavigationDestination(
+      icon: Icon(Icons.leaderboard_outlined),
+      selectedIcon: Icon(Icons.leaderboard),
+      label: "Sıralama",
+    ),
+    NavigationDestination(
+      icon: Icon(Icons.person_outline),
+      selectedIcon: Icon(Icons.person),
+      label: "Profil",
+    ),
+  ],
+),
     );
   }
 }

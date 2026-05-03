@@ -15,12 +15,8 @@ class _LoginPageState extends State<LoginPage> {
 
   bool _isLoading = false;
 
-  // Firebase Giriş Fonksiyonu
   Future<void> _signIn() async {
-    setState(() {
-      _isLoading = true;
-    });
-
+    setState(() => _isLoading = true);
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
@@ -28,59 +24,38 @@ class _LoginPageState extends State<LoginPage> {
       );
     } on FirebaseAuthException catch (e) {
       String message = "Bir hata oluştu";
-      if (e.code == 'user-not-found') {
-        message = "Bu e-posta ile kayıtlı kullanıcı bulunamadı.";
-      } else if (e.code == 'wrong-password') {
-        message = "Hatalı şifre girdiniz.";
-      } else if (e.code == 'invalid-email') {
-        message = "Geçersiz bir e-posta adresi girdiniz.";
-      }
-
+      if (e.code == 'user-not-found') message = "Kullanıcı bulunamadı.";
+      else if (e.code == 'wrong-password') message = "Hatalı şifre.";
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message), backgroundColor: Colors.red),
         );
       }
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  // --- ŞİFRE SIFIRLAMA FONKSİYONU ---
   Future<void> _resetPassword() async {
     final String email = _emailController.text.trim();
-
     if (email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Lütfen önce e-posta adresinizi giriniz."),
-          backgroundColor: Colors.orange,
-        ),
+        const SnackBar(content: Text("E-posta adresinizi giriniz."), backgroundColor: Colors.orange),
       );
       return;
     }
-
     try {
       await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Şifre sıfırlama bağlantısı e-postanıza gönderildi."),
-            backgroundColor: Colors.green,
-          ),
+          const SnackBar(content: Text("Sıfırlama linki gönderildi."), backgroundColor: Colors.green),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Hata: ${e.toString()}"),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text("Hata: $e"), backgroundColor: Colors.red),
         );
       }
     }
@@ -88,91 +63,110 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Ekran boyutlarını alıyoruz
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
-      appBar: AppBar(title: const Text("Giriş Yap")),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: SingleChildScrollView( // Klavye açıldığında taşmayı önlemek için eklendi
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const SizedBox(height: 20),
-              const Icon(Icons.auto_stories, size: 80, color: Colors.deepPurple),
-              const SizedBox(height: 20),
-              const Text(
-                "Kelime Ezberleme Uygulaması",
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+      appBar: AppBar(title: const Text("Giriş Yap"), elevation: 0),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            // Ekranın yüksekliğine göre içeriği ortalamak için kullanılır
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: constraints.maxHeight,
               ),
-              const SizedBox(height: 30),
+              child: IntrinsicHeight(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center, // Dikeyde ortala
+                    children: [
+                      const Spacer(flex: 2), // Üstten esnek boşluk
+                      Icon(
+                        Icons.auto_stories,
+                        size: size.width * 0.2, // İkon boyutu ekran genişliğine duyarlı
+                        color: Colors.deepPurple,
+                      ),
+                      const SizedBox(height: 20),
+                      const Text(
+                        "Kelime Master",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 40),
+                      
+                      // E-posta Alanı
+                      TextField(
+                        controller: _emailController,
+                        decoration: InputDecoration(
+                          labelText: "E-posta",
+                          prefixIcon: const Icon(Icons.email_outlined),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        keyboardType: TextInputType.emailAddress,
+                      ),
+                      const SizedBox(height: 16),
 
-              // E-posta Alanı
-              TextField(
-                controller: _emailController,
-                decoration: const InputDecoration(
-                  labelText: "E-posta",
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.email),
-                ),
-                keyboardType: TextInputType.emailAddress,
-              ),
-              const SizedBox(height: 15),
+                      // Şifre Alanı
+                      TextField(
+                        controller: _passwordController,
+                        decoration: InputDecoration(
+                          labelText: "Şifre",
+                          prefixIcon: const Icon(Icons.lock_outline),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        obscureText: true,
+                      ),
 
-              // Şifre Alanı
-              TextField(
-                controller: _passwordController,
-                decoration: const InputDecoration(
-                  labelText: "Şifre",
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.lock),
-                ),
-                obscureText: true,
-              ),
+                      // Şifremi Unuttum
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: _resetPassword,
+                          child: const Text("Şifremi Unuttum"),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
 
-              // --- ŞİFREMİ UNUTTUM BUTONU ---
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: _resetPassword,
-                  child: const Text(
-                    "Şifremi Unuttum",
-                    style: TextStyle(color: Colors.deepPurple, fontWeight: FontWeight.w600),
+                      // Giriş Butonu
+                      SizedBox(
+                        width: double.infinity,
+                        height: 55,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _signIn,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.deepPurple,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: _isLoading
+                              ? const CircularProgressIndicator(color: Colors.white)
+                              : const Text("Giriş Yap", style: TextStyle(fontSize: 18)),
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // Kayıt Ol
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const RegisterPage()),
+                          );
+                        },
+                        child: const Text("Hesabın yok mu? Kayıt Ol", 
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                      const Spacer(flex: 3), // Alttan esnek boşluk
+                    ],
                   ),
                 ),
               ),
-              
-              const SizedBox(height: 10),
-
-              // Giriş Butonu
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _signIn,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurple,
-                    foregroundColor: Colors.white,
-                  ),
-                  child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text("Giriş Yap", style: TextStyle(fontSize: 18)),
-                ),
-              ),
-
-              const SizedBox(height: 15),
-
-              // Kayıt Ol Yönlendirmesi
-              TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const RegisterPage()),
-                  );
-                },
-                child: const Text("Hesabın yok mu? Kayıt Ol"),
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
