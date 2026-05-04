@@ -22,9 +22,7 @@ final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   FirebaseDatabase.instance.databaseURL =
       "https://yazilim-yapimi-eb2a5-default-rtdb.europe-west1.firebasedatabase.app/";
@@ -42,7 +40,7 @@ class MyApp extends StatelessWidget {
       builder: (context, mode, _) {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
-          title: "Kelime Ezberleme Uygulaması",
+          title: "Wordify", // İsim Wordify olarak güncellendi
           themeMode: mode,
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
@@ -77,7 +75,9 @@ class AuthWrapper extends StatelessWidget {
         }
 
         if (snapshot.hasData) {
-          return const MyHomePage(title: "Kelime Ezberleme Ana Sayfa");
+          return const MyHomePage(
+            title: "Wordify Ana Sayfa",
+          ); // İsim güncellendi
         } else {
           return const LoginPage();
         }
@@ -143,25 +143,33 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           const Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("Günün Kelimesi",
-                  style: TextStyle(
-                      color: Colors.deepPurple,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14)),
+              Text(
+                "Günün Kelimesi",
+                style: TextStyle(
+                  color: Colors.deepPurple,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
               Icon(Icons.lightbulb_outline, color: Colors.amber, size: 20),
             ],
           ),
           const SizedBox(height: 10),
-          const Text("Persistent",
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-          const Text("Israrcı, kalıcı",
-              style: TextStyle(fontSize: 16, color: Colors.grey)),
+          const Text(
+            "Persistent",
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          const Text(
+            "Israrcı, kalıcı",
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+          ),
           const Divider(height: 25),
           Text(
             "\"Success is the result of persistent effort.\"",
             style: TextStyle(
-                fontStyle: FontStyle.italic,
-                color: isDark ? Colors.grey[400] : Colors.blueGrey),
+              fontStyle: FontStyle.italic,
+              color: isDark ? Colors.grey[400] : Colors.blueGrey,
+            ),
           ),
         ],
       ),
@@ -193,10 +201,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  color.withOpacity(0.16),
-                  color.withOpacity(0.05),
-                ],
+                colors: [color.withOpacity(0.16), color.withOpacity(0.05)],
               ),
               border: Border.all(color: color.withOpacity(0.28), width: 1.3),
               boxShadow: [
@@ -225,7 +230,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                     title,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w700),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ],
@@ -236,11 +243,21 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     );
   }
 
+  // İsim formatlama yardımcı fonksiyonu
+  String _formatName(String fullName) {
+    if (fullName.isEmpty) return "Kullanıcı";
+
+    // Sadece ilk kelimeyi al (Soyadı atla)
+    String firstName = fullName.trim().split(' ').first;
+
+    if (firstName.isEmpty) return "Kullanıcı";
+
+    // İlk harfi büyük, kalanları küçük yap
+    return firstName[0].toUpperCase() + firstName.substring(1).toLowerCase();
+  }
+
   Widget _buildHomePage() {
     final user = FirebaseAuth.instance.currentUser;
-    final displayName = user?.displayName ??
-        user?.email?.split('@').first ??
-        "Kullanıcı";
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primary = Theme.of(context).colorScheme.primary;
 
@@ -262,8 +279,14 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                   borderRadius: BorderRadius.circular(26),
                   gradient: LinearGradient(
                     colors: isDark
-                        ? [Colors.deepPurple.shade800, Colors.deepPurple.shade600]
-                        : [Colors.deepPurple.shade400, Colors.deepPurple.shade700],
+                        ? [
+                            Colors.deepPurple.shade800,
+                            Colors.deepPurple.shade600,
+                          ]
+                        : [
+                            Colors.deepPurple.shade400,
+                            Colors.deepPurple.shade700,
+                          ],
                   ),
                   boxShadow: [
                     BoxShadow(
@@ -279,17 +302,51 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text("Hoş Geldin 👋",
-                              style: TextStyle(
-                                  color: Colors.white.withOpacity(0.8),
-                                  fontSize: 14)),
+                          Text(
+                            "Hoş Geldin 👋",
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.8),
+                              fontSize: 14,
+                            ),
+                          ),
                           const SizedBox(height: 6),
-                          Text(displayName,
-                              style: const TextStyle(
+
+                          // İSMİ FORMATLAYARAK VERİTABANINDAN ÇEKEN YENİ KOD BLOĞU
+                          FutureBuilder<DataSnapshot>(
+                            future: FirebaseDatabase.instance
+                                .ref()
+                                .child('Users/${user?.uid}/UserName')
+                                .get(),
+                            builder: (context, snapshot) {
+                              String displayName = "Kullanıcı";
+
+                              if (snapshot.hasData &&
+                                  snapshot.data?.value != null) {
+                                // Veritabanından gelen veriyi al ve formatla
+                                String rawName = snapshot.data!.value
+                                    .toString();
+                                displayName = _formatName(rawName);
+                              } else if (user?.displayName != null) {
+                                // Google ile giriş vs yaptıysa
+                                displayName = _formatName(user!.displayName!);
+                              } else if (user?.email != null) {
+                                // E-posta kullanılıyorsa @'ten öncesini al ve formatla
+                                displayName = _formatName(
+                                  user!.email!.split('@').first,
+                                );
+                              }
+
+                              return Text(
+                                displayName,
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 24,
-                                  fontWeight: FontWeight.bold),
-                              overflow: TextOverflow.ellipsis),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              );
+                            },
+                          ),
                         ],
                       ),
                     ),
@@ -309,12 +366,15 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                     width: 4,
                     height: 20,
                     decoration: BoxDecoration(
-                        color: primary, borderRadius: BorderRadius.circular(5)),
+                      color: primary,
+                      borderRadius: BorderRadius.circular(5),
+                    ),
                   ),
                   const SizedBox(width: 10),
-                  const Text("Modüller",
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Text(
+                    "Modüller",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                 ],
               ),
 
@@ -328,32 +388,80 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                 mainAxisSpacing: 14,
                 childAspectRatio: 1.05,
                 children: [
-                  _buildModuleBox("Quiz Ol", Icons.quiz_rounded, () {
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (_) => const QuizPage()));
-                  }, Colors.deepPurple, 0),
-                  _buildModuleBox("Wordle Oyna", Icons.grid_view_rounded, () {
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (_) => const WordlePage()));
-                  }, Colors.teal, 80),
-                  _buildModuleBox("Kelime Ekle", Icons.add_circle_outline, () {
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (_) => const AddWordsPage()));
-                  }, Colors.orange, 160),
-                  _buildModuleBox("Quiz Ayarları", Icons.settings_rounded, () {
-                    Navigator.push(
+                  _buildModuleBox(
+                    "Quiz Ol",
+                    Icons.quiz_rounded,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const QuizPage()),
+                      );
+                    },
+                    Colors.deepPurple,
+                    0,
+                  ),
+                  _buildModuleBox(
+                    "Wordle Oyna",
+                    Icons.grid_view_rounded,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const WordlePage()),
+                      );
+                    },
+                    Colors.teal,
+                    80,
+                  ),
+                  _buildModuleBox(
+                    "Kelime Ekle",
+                    Icons.add_circle_outline,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const AddWordsPage()),
+                      );
+                    },
+                    Colors.orange,
+                    160,
+                  ),
+                  _buildModuleBox(
+                    "Quiz Ayarları",
+                    Icons.settings_rounded,
+                    () {
+                      Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (_) => const QuizSettingsPage()));
-                  }, Colors.indigo, 240),
-                  _buildModuleBox("Analiz Raporu", Icons.analytics_outlined, () {
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (_) => const PrintReport()));
-                  }, Colors.green, 320),
-                  _buildModuleBox("AI Asistan", Icons.smart_toy_outlined, () {
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (_) => const AIassistant()));
-                  }, Colors.redAccent, 400),
+                          builder: (_) => const QuizSettingsPage(),
+                        ),
+                      );
+                    },
+                    Colors.indigo,
+                    240,
+                  ),
+                  _buildModuleBox(
+                    "Analiz Raporu",
+                    Icons.analytics_outlined,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const PrintReport()),
+                      );
+                    },
+                    Colors.green,
+                    320,
+                  ),
+                  _buildModuleBox(
+                    "AI Asistan",
+                    Icons.smart_toy_outlined,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const AIassistant()),
+                      );
+                    },
+                    Colors.redAccent,
+                    400,
+                  ),
                 ],
               ),
               const SizedBox(height: 20),
@@ -370,16 +478,24 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         return _buildHomePage();
       case 1:
         return FadeTransition(
-            opacity: _fadeAnimation, child: const WordsPage());
+          opacity: _fadeAnimation,
+          child: const WordsPage(),
+        );
       case 2:
         return FadeTransition(
-            opacity: _fadeAnimation, child: const StatsPage());
+          opacity: _fadeAnimation,
+          child: const StatsPage(),
+        );
       case 3:
         return FadeTransition(
-            opacity: _fadeAnimation, child: const LeaderboardPage());
+          opacity: _fadeAnimation,
+          child: const LeaderboardPage(),
+        );
       case 4:
         return FadeTransition(
-            opacity: _fadeAnimation, child: const ProfilePage());
+          opacity: _fadeAnimation,
+          child: const ProfilePage(),
+        );
       default:
         return const Center(child: Text("Sayfa bulunamadı"));
     }
@@ -397,23 +513,28 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         scrolledUnderElevation: 0,
         title: Row(
           children: [
-            Icon(Icons.auto_stories_rounded,
-                color: Theme.of(context).colorScheme.primary),
+            Icon(
+              Icons.auto_stories_rounded,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             const SizedBox(width: 10),
-            const Text("WordMaster",
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.deepPurple)),
+            const Text(
+              "Wordify", // İsim Wordify olarak güncellendi
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.deepPurple,
+              ),
+            ),
           ],
         ),
         actions: [
           IconButton(
             icon: Icon(
-                isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-                color: Theme.of(context).colorScheme.primary),
+              isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             onPressed: () {
-              themeNotifier.value =
-                  isDark ? ThemeMode.light : ThemeMode.dark;
+              themeNotifier.value = isDark ? ThemeMode.light : ThemeMode.dark;
             },
           ),
         ],
