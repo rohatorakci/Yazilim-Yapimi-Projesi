@@ -21,19 +21,11 @@ Toplamda 6 aşamalı bir tekrar sistemi kullanılır. Bu sayede kullanıcılar k
 
 Kullanıcı bir kelime eklediğinde sistem bunu bir öğrenme döngüsüne alır. Kelime belirlenen zamanlarda tekrar kullanıcıya gösterilir.
 
-Temel akış şu şekildedir:
-
-* İlk öğrenme
-* Kısa süre sonra tekrar
-* 1 gün sonra tekrar
-* 3–4 gün sonra tekrar
-* 1 hafta sonra tekrar
-* Son tekrar ve kalıcı öğrenme
 
 ## Kullanılan Teknolojiler
 
 * Flutter / Dart
-* Yerel veri saklama (Hive / SQLite / SharedPreferences)
+* onlinw veri saklama (Firebase)
 * Basit state yönetimi
 
 ## Kurulum
@@ -41,7 +33,7 @@ Temel akış şu şekildedir:
 Projeyi klonlayın:
 
 ```bash id="kl1s0r"
-git clone https://github.com/kullaniciadi/kelime-uygulamasi.git
+git clone https://github.com/rohatorakci/Yazilim-Yapimi-Projesi
 ```
 
 Dizin içine girin:
@@ -71,7 +63,6 @@ Bu proje eğitim amaçlı geliştirilmiştir. Hedef, kelime öğrenme sürecini 
 İlerleyen süreçte aşağıdaki özellikler eklenebilir:
 
 * Bulut senkronizasyonu
-* Test modu (quiz sistemi)
 * Sesli telaffuz desteği
 * İstatistik ekranı
 * Zorluk seviyeleri
@@ -83,3 +74,9 @@ Bu proje açık kaynak olarak paylaşılmıştır.
 ---
 
 Geliştiriciler : 
+
+Muhammet oruçoğlu (highlvmami)
+Murat Durmuş Erol (Qwnstriker)
+Süleyman Rohat Orakçı (rohatorakci)
+
+ Hoşunuza giderse repomuza yıldız vermeyi unutmayın !!!
