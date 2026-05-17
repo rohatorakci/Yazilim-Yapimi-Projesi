@@ -33,6 +33,7 @@ Temel akış şu şekildedir:
 ## Kullanılan Teknolojiler
 
 * Flutter / Dart
+* online veri saklama (Firebase)
 * Basit state yönetimi
 
 ## Kurulum
@@ -40,7 +41,7 @@ Temel akış şu şekildedir:
 Projeyi klonlayın:
 
 ```bash id="kl1s0r"
-git clone https://github.com/kullaniciadi/kelime-uygulamasi.git
+git clone https://github.com/rohatorakci/Yazilim-Yapimi-Projesi
 ```
 
 Dizin içine girin:
@@ -79,6 +80,10 @@ Bu proje açık kaynak olarak paylaşılmıştır.
 
 ---
 
-Geliştiriciler : Muhammet oruçoğlu (highlvmami) Murat Durmuş Erol (Qwnstriker) Süleyman Rohat Orakçı (rohatorakci)
+Geliştiriciler : 
 
-Hoşunuza giderse repomuza yıldız vermeyi unutmayın !!!
+Muhammet oruçoğlu (highlvmami)
+Murat Durmuş Erol (Qwnstriker)
+Süleyman Rohat Orakçı (rohatorakci)
+
+Hoşunuza giderse repomuza yıldız ⭐ vermeyi unutmayın !!!
