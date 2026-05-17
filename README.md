@@ -23,17 +23,16 @@ Kullanıcı bir kelime eklediğinde sistem bunu bir öğrenme döngüsüne alır
 
 Temel akış şu şekildedir:
 
-* İlk öğrenme
-* Kısa süre sonra tekrar
-* 1 gün sonra tekrar
-* 3–4 gün sonra tekrar
-* 1 hafta sonra tekrar
-* Son tekrar ve kalıcı öğrenme
+* İlk öğrenme 
+* 1 gün sonra
+* 1 hafta sonra
+* 1 ay sonra
+* 3 ay sonra
+* 6 ay sonra son tekrar ve kalıcı öğrenme
 
 ## Kullanılan Teknolojiler
 
 * Flutter / Dart
-* Yerel veri saklama (Hive / SQLite / SharedPreferences)
 * Basit state yönetimi
 
 ## Kurulum
@@ -71,9 +70,7 @@ Bu proje eğitim amaçlı geliştirilmiştir. Hedef, kelime öğrenme sürecini 
 İlerleyen süreçte aşağıdaki özellikler eklenebilir:
 
 * Bulut senkronizasyonu
-* Test modu (quiz sistemi)
 * Sesli telaffuz desteği
-* İstatistik ekranı
 * Zorluk seviyeleri
 
 ## Lisans
@@ -82,4 +79,6 @@ Bu proje açık kaynak olarak paylaşılmıştır.
 
 ---
 
-Geliştiriciler : 
+Geliştiriciler : Muhammet oruçoğlu (highlvmami) Murat Durmuş Erol (Qwnstriker) Süleyman Rohat Orakçı (rohatorakci)
+
+Hoşunuza giderse repomuza yıldız vermeyi unutmayın !!!
