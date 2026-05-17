@@ -13,7 +13,7 @@ import 'quizSettings.dart';
 import 'stats.dart';
 import 'words.dart';
 import 'PrintReport.dart';
-import 'AIassistant.dart';
+import 'ai_assistant.dart';
 import 'leaderboard.dart';
 
 // Global tema notifier
