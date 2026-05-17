@@ -16,15 +16,13 @@ class _AIassistantState extends State<AIassistant> {
   final DatabaseReference _dbRef = FirebaseDatabase.instance.ref();
   final User? _user = FirebaseAuth.instance.currentUser;
 
-  // --- Üretim Kısımı Değişkenleri ---
   bool _isLoading = false;
   bool _isWordsLoading = true;
   String _generatedStory = "";
   String _generatedImageBase64 = "";
   List<Map<String, String>> _availableWords = [];
-  List<Map<String, String>> _selectedWords = [];
+  final List<Map<String, String>> _selectedWords = [];
 
-  // --- Geçmiş Hikayeler Kısımı Değişkenleri ---
   bool _isHistoryLoading = true;
   List<Map<dynamic, dynamic>> _storiesList = [];
 
@@ -35,9 +33,10 @@ class _AIassistantState extends State<AIassistant> {
     _fetchStories();
   }
 
-  // --- VERİ ÇEKME İŞLEMLERİ ---
   Future<void> _fetchUserWords() async {
-    if (_user == null) return;
+    if (_user == null) {
+      return;
+    }
     try {
       final progressSnapshot = await _dbRef
           .child('Users/${_user!.uid}/wordProgress')
@@ -60,19 +59,27 @@ class _AIassistantState extends State<AIassistant> {
           }
         });
 
-        setState(() {
-          _availableWords = tempWords;
-        });
+        if (mounted) {
+          setState(() {
+            _availableWords = tempWords;
+          });
+        }
       }
     } catch (e) {
       debugPrint("Kelimeler çekilirken hata: $e");
     } finally {
-      setState(() => _isWordsLoading = false);
+      if (mounted) {
+        setState(() {
+          _isWordsLoading = false;
+        });
+      }
     }
   }
 
   Future<void> _fetchStories() async {
-    if (_user == null) return;
+    if (_user == null) {
+      return;
+    }
     try {
       final snapshot = await _dbRef
           .child('Users/${_user!.uid}/AI_Stories')
@@ -92,27 +99,34 @@ class _AIassistantState extends State<AIassistant> {
           return dateB.compareTo(dateA);
         });
 
-        setState(() {
-          _storiesList = tempStories;
-        });
+        if (mounted) {
+          setState(() {
+            _storiesList = tempStories;
+          });
+        }
       } else {
-        // Eğer hiç hikaye kalmadıysa listeyi boşalt
-        setState(() {
-          _storiesList = [];
-        });
+        if (mounted) {
+          setState(() {
+            _storiesList = [];
+          });
+        }
       }
     } catch (e) {
       debugPrint("Hikayeler çekilirken hata: $e");
     } finally {
-      setState(() => _isHistoryLoading = false);
+      if (mounted) {
+        setState(() {
+          _isHistoryLoading = false;
+        });
+      }
     }
   }
 
-  // --- HİKAYE SİLME İŞLEMİ ---
   Future<void> _deleteStory(String storyId) async {
-    if (_user == null) return;
+    if (_user == null) {
+      return;
+    }
 
-    // Önce kullanıcıya emin olup olmadığını soralım
     bool confirmDelete =
         await showDialog(
           context: context,
@@ -139,42 +153,75 @@ class _AIassistantState extends State<AIassistant> {
             );
           },
         ) ??
-        false; // Eğer boşluğa tıklayıp kapatırsa false dönsün
+        false;
 
-    if (!confirmDelete) return;
+    if (!confirmDelete) {
+      return;
+    }
 
-    setState(() => _isHistoryLoading = true);
+    setState(() {
+      _isHistoryLoading = true;
+    });
 
     try {
-      // Firebase'den silme işlemi
       await _dbRef.child('Users/${_user!.uid}/AI_Stories/$storyId').remove();
-
-      // Listeyi güncelle
       await _fetchStories();
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Hikaye başarıyla silindi!'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
+      if (!mounted) {
+        return;
       }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Hikaye başarıyla silindi!'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Silme hatası: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+      if (!mounted) {
+        return;
       }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Silme hatası: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
-      setState(() => _isHistoryLoading = false);
+      if (mounted) {
+        setState(() {
+          _isHistoryLoading = false;
+        });
+      }
     }
   }
 
-  // --- HİKAYE ÜRETİM VE KAYDETME İŞLEMLERİ ---
+  void _toggleWordSelection(
+    Map<String, String> word,
+    bool? isSelected,
+    StateSetter setModalState,
+  ) {
+    setModalState(() {
+      if (isSelected == true) {
+        if (_selectedWords.length < 5) {
+          setState(() {
+            _selectedWords.add(word);
+          });
+        } else {
+          if (!mounted) {
+            return;
+          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('En fazla 5 kelime seçebilirsiniz!')),
+          );
+        }
+      } else {
+        setState(() {
+          _selectedWords.removeWhere((w) => w['id'] == word['id']);
+        });
+      }
+    });
+  }
+
   void _openWordSelectionSheet() {
     if (_availableWords.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -236,29 +283,8 @@ class _AIassistantState extends State<AIassistant> {
                         return CheckboxListTile(
                           title: Text(word['english'] ?? ''),
                           value: isSelected,
-                          onChanged: (bool? value) {
-                            setModalState(() {
-                              if (value == true) {
-                                if (_selectedWords.length < 5) {
-                                  setState(() => _selectedWords.add(word));
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'En fazla 5 kelime seçebilirsiniz!',
-                                      ),
-                                    ),
-                                  );
-                                }
-                              } else {
-                                setState(
-                                  () => _selectedWords.removeWhere(
-                                    (w) => w['id'] == word['id'],
-                                  ),
-                                );
-                              }
-                            });
-                          },
+                          onChanged: (bool? value) =>
+                              _toggleWordSelection(word, value, setModalState),
                         );
                       },
                     ),
@@ -286,6 +312,67 @@ class _AIassistantState extends State<AIassistant> {
     );
   }
 
+  Future<void> _processAiGeneration() async {
+    String wordsChainForAI = _selectedWords.map((w) => w['english']).join(', ');
+
+    final promptText = Uri.encodeComponent(
+      "You are a storyteller. DO NOT use JSON formatting. DO NOT show your thinking process or internal monologue. Just give me the final text directly without any introduction.\n\n"
+      "Task 1: Write a short, creative story in TURKISH using these exact words: $wordsChainForAI.\n"
+      "Task 2: At the very end of your response, write the exact word 'Prompt:' followed by a 1-sentence English visual description of the story.\n\n"
+      "Output ONLY the Turkish story and the English prompt line. Nothing else.",
+    );
+
+    final textUrl = Uri.parse('https://text.pollinations.ai/$promptText');
+    final textResponse = await http.get(textUrl);
+
+    if (textResponse.statusCode != 200) {
+      throw Exception("Hikaye üretilemedi. Status: ${textResponse.statusCode}");
+    }
+
+    _parseAndSetAiResponse(textResponse.body, wordsChainForAI);
+  }
+
+  void _parseAndSetAiResponse(String rawResponse, String fallbackPrompt) {
+    String responseText = rawResponse;
+
+    if (responseText.trim().startsWith('{') &&
+        responseText.contains('content"')) {
+      try {
+        final jsonDecodeText = jsonDecode(responseText);
+        responseText = jsonDecodeText['content'] ?? responseText;
+      } catch (e) {
+        responseText = rawResponse;
+      }
+    }
+
+    String storyResult = "";
+    String imagePrompt = fallbackPrompt;
+
+    if (responseText.contains("Prompt:")) {
+      var parts = responseText.split("Prompt:");
+      storyResult = parts[0].replaceAll("Hikaye:", "").trim();
+      imagePrompt = parts[1].trim();
+    } else if (responseText.contains("prompt:")) {
+      var parts = responseText.split("prompt:");
+      storyResult = parts[0].replaceAll("Hikaye:", "").trim();
+      imagePrompt = parts[1].trim();
+    } else {
+      storyResult = responseText.trim();
+    }
+
+    String safeImagePrompt = Uri.encodeComponent(imagePrompt);
+    String seed = DateTime.now().millisecondsSinceEpoch.toString();
+    String imageUrlResult =
+        "https://image.pollinations.ai/prompt/$safeImagePrompt?seed=$seed&width=800&height=600&nologo=true";
+
+    if (mounted) {
+      setState(() {
+        _generatedStory = storyResult;
+        _generatedImageBase64 = imageUrlResult;
+      });
+    }
+  }
+
   Future<void> _generateContent() async {
     if (_selectedWords.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -301,67 +388,12 @@ class _AIassistantState extends State<AIassistant> {
     });
 
     try {
-      String wordsChainForAI = _selectedWords
-          .map((w) => w['english'])
-          .join(', ');
-
-      // --- 1. ADIM: HİKAYE ÜRETİMİ ---
-      final promptText = Uri.encodeComponent(
-        "You are a storyteller. DO NOT use JSON formatting. DO NOT show your thinking process or internal monologue. Just give me the final text directly without any introduction.\n\n"
-        "Task 1: Write a short, creative story in TURKISH using these exact words: $wordsChainForAI.\n"
-        "Task 2: At the very end of your response, write the exact word 'Prompt:' followed by a 1-sentence English visual description of the story.\n\n"
-        "Output ONLY the Turkish story and the English prompt line. Nothing else.",
-      );
-
-      final textUrl = Uri.parse('https://text.pollinations.ai/$promptText');
-      final textResponse = await http.get(textUrl);
-
-      if (textResponse.statusCode != 200) {
-        throw Exception(
-          "Hikaye üretilemedi. Status: ${textResponse.statusCode}",
-        );
-      }
-
-      String responseText = textResponse.body;
-
-      if (responseText.trim().startsWith('{') &&
-          responseText.contains('content"')) {
-        try {
-          final jsonDecodeText = jsonDecode(responseText);
-          responseText = jsonDecodeText['content'] ?? responseText;
-        } catch (e) {
-          // JSON decode edilemezse düz metin olarak devam et
-        }
-      }
-
-      // --- GELEN METNİ PARÇALAMA ---
-      String storyResult = "";
-      String imagePrompt = wordsChainForAI;
-
-      if (responseText.contains("Prompt:")) {
-        var parts = responseText.split("Prompt:");
-        storyResult = parts[0].replaceAll("Hikaye:", "").trim();
-        imagePrompt = parts[1].trim();
-      } else if (responseText.contains("prompt:")) {
-        var parts = responseText.split("prompt:");
-        storyResult = parts[0].replaceAll("Hikaye:", "").trim();
-        imagePrompt = parts[1].trim();
-      } else {
-        storyResult = responseText.trim();
-      }
-
-      // --- 2. ADIM: GÖRSEL ÜRETİMİ ---
-      String safeImagePrompt = Uri.encodeComponent(imagePrompt);
-      String seed = DateTime.now().millisecondsSinceEpoch.toString();
-      String imageUrlResult =
-          "https://image.pollinations.ai/prompt/$safeImagePrompt?seed=$seed&width=800&height=600&nologo=true";
-
-      setState(() {
-        _generatedStory = storyResult;
-        _generatedImageBase64 = imageUrlResult;
-      });
+      await _processAiGeneration();
     } catch (e) {
       debugPrint("API ÇAĞRISI HATASI: $e");
+      if (!mounted) {
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Hata: $e'),
@@ -370,17 +402,24 @@ class _AIassistantState extends State<AIassistant> {
         ),
       );
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
   Future<void> _saveToDatabase() async {
     if (_user == null ||
         _generatedStory.isEmpty ||
-        _generatedImageBase64.isEmpty)
+        _generatedImageBase64.isEmpty) {
       return;
+    }
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+    });
 
     try {
       DateTime now = DateTime.now();
@@ -399,37 +438,46 @@ class _AIassistantState extends State<AIassistant> {
 
       await _fetchStories();
 
-      setState(() {
-        _generatedStory = "";
-        _generatedImageBase64 = "";
-        _selectedWords.clear();
-      });
+      if (mounted) {
+        setState(() {
+          _generatedStory = "";
+          _generatedImageBase64 = "";
+          _selectedWords.clear();
+        });
+      }
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Başarıyla kaydedildi!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+      if (!mounted) {
+        return;
       }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Başarıyla kaydedildi!'),
+          backgroundColor: Colors.green,
+        ),
+      );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Kaydetme hatası: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+      if (!mounted) {
+        return;
       }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Kaydetme hatası: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
-  // Tarih Formatlayıcı
   String _formatDate(String isoDate) {
-    if (isoDate.isEmpty) return "Bilinmeyen Tarih";
+    if (isoDate.isEmpty) {
+      return "Bilinmeyen Tarih";
+    }
     try {
       DateTime date = DateTime.parse(isoDate);
       return "${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year} - ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}";
@@ -438,10 +486,10 @@ class _AIassistantState extends State<AIassistant> {
     }
   }
 
-  // Base64 veya URL uyumlu Görsel Çizici
   Widget _buildImageWidget(String imageData, {double height = 200}) {
-    if (imageData.isEmpty)
+    if (imageData.isEmpty) {
       return Container(height: height, color: Colors.grey[300]);
+    }
 
     if (imageData.startsWith('http')) {
       return Image.network(
@@ -468,6 +516,95 @@ class _AIassistantState extends State<AIassistant> {
     }
   }
 
+  Widget _buildHistoryContent() {
+    if (_isHistoryLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_storiesList.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20.0),
+          child: Text(
+            'Henüz kaydedilmiş bir hikaye yok.',
+            style: TextStyle(color: Colors.grey),
+          ),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _storiesList.length,
+      itemBuilder: (context, index) {
+        var storyData = _storiesList[index];
+
+        return Card(
+          elevation: 3,
+          margin: const EdgeInsets.only(bottom: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _formatDate(storyData['date'] ?? ''),
+                      style: const TextStyle(color: Colors.grey, fontSize: 12),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline, color: Colors.red),
+                      onPressed: () => _deleteStory(storyData['id']),
+                      constraints: const BoxConstraints(),
+                      padding: EdgeInsets.zero,
+                      tooltip: "Sil",
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8.0,
+                  children: (storyData['wordsChain'] ?? '')
+                      .toString()
+                      .split(',')
+                      .map(
+                        (word) => Chip(
+                          label: Text(word.trim()),
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primaryContainer,
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      )
+                      .toList(),
+                ),
+                const SizedBox(height: 12),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: _buildImageWidget(
+                    storyData['imageUrl'] ?? '',
+                    height: 180,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  storyData['story'] ?? '',
+                  style: const TextStyle(fontSize: 15, height: 1.4),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -483,7 +620,6 @@ class _AIassistantState extends State<AIassistant> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // --- 1. YENİ HİKAYE OLUŞTURMA BÖLÜMÜ ---
                   Text(
                     'Yeni Hikaye Oluştur',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -494,7 +630,7 @@ class _AIassistantState extends State<AIassistant> {
                   Card(
                     color: Theme.of(
                       context,
-                    ).colorScheme.primaryContainer.withOpacity(0.5),
+                    ).colorScheme.primaryContainer.withValues(alpha: 0.5),
                     elevation: 0,
                     child: const Padding(
                       padding: EdgeInsets.all(16.0),
@@ -517,7 +653,6 @@ class _AIassistantState extends State<AIassistant> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
                   OutlinedButton.icon(
                     icon: const Icon(Icons.checklist),
                     label: const Text('Kelime Seç'),
@@ -530,7 +665,6 @@ class _AIassistantState extends State<AIassistant> {
                     onPressed: _openWordSelectionSheet,
                   ),
                   const SizedBox(height: 10),
-
                   if (_selectedWords.isNotEmpty)
                     Wrap(
                       spacing: 8.0,
@@ -550,7 +684,6 @@ class _AIassistantState extends State<AIassistant> {
                       }).toList(),
                     ),
                   const SizedBox(height: 16),
-
                   SizedBox(
                     height: 50,
                     child: ElevatedButton.icon(
@@ -580,8 +713,6 @@ class _AIassistantState extends State<AIassistant> {
                           : _generateContent,
                     ),
                   ),
-
-                  // Üretilen İçerik Gösterimi ve Kaydetme
                   if (_generatedStory.isNotEmpty) ...[
                     const SizedBox(height: 20),
                     Container(
@@ -617,12 +748,9 @@ class _AIassistantState extends State<AIassistant> {
                       ),
                     ),
                   ],
-
                   const SizedBox(height: 30),
                   const Divider(thickness: 2),
                   const SizedBox(height: 20),
-
-                  // --- 2. GEÇMİŞ HİKAYELER BÖLÜMÜ ---
                   Text(
                     'Geçmiş Hikayelerim',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -630,104 +758,7 @@ class _AIassistantState extends State<AIassistant> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  _isHistoryLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : _storiesList.isEmpty
-                      ? const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(20.0),
-                            child: Text(
-                              'Henüz kaydedilmiş bir hikaye yok.',
-                              style: TextStyle(color: Colors.grey),
-                            ),
-                          ),
-                        )
-                      : ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: _storiesList.length,
-                          itemBuilder: (context, index) {
-                            var storyData = _storiesList[index];
-
-                            return Card(
-                              elevation: 3,
-                              margin: const EdgeInsets.only(bottom: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    // TARIH VE SİLME BUTONU YAN YANA
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          _formatDate(storyData['date'] ?? ''),
-                                          style: const TextStyle(
-                                            color: Colors.grey,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                        IconButton(
-                                          icon: const Icon(
-                                            Icons.delete_outline,
-                                            color: Colors.red,
-                                          ),
-                                          onPressed: () =>
-                                              _deleteStory(storyData['id']),
-                                          constraints: const BoxConstraints(),
-                                          padding: EdgeInsets.zero,
-                                          tooltip: "Sil",
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 10),
-                                    Wrap(
-                                      spacing: 8.0,
-                                      children: (storyData['wordsChain'] ?? '')
-                                          .toString()
-                                          .split(',')
-                                          .map(
-                                            (word) => Chip(
-                                              label: Text(word.trim()),
-                                              backgroundColor: Theme.of(
-                                                context,
-                                              ).colorScheme.primaryContainer,
-                                              visualDensity:
-                                                  VisualDensity.compact,
-                                            ),
-                                          )
-                                          .toList(),
-                                    ),
-                                    const SizedBox(height: 12),
-
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: _buildImageWidget(
-                                        storyData['imageUrl'] ?? '',
-                                        height: 180,
-                                      ),
-                                    ),
-
-                                    const SizedBox(height: 12),
-                                    Text(
-                                      storyData['story'] ?? '',
-                                      style: const TextStyle(
-                                        fontSize: 15,
-                                        height: 1.4,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
+                  _buildHistoryContent(),
                 ],
               ),
             ),
