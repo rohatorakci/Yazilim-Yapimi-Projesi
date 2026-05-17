@@ -86,4 +86,4 @@ Muhammet oruçoğlu (highlvmami)
 Murat Durmuş Erol (Qwnstriker)
 Süleyman Rohat Orakçı (rohatorakci)
 
-Hoşunuza giderse repomuza yıldız ⭐ vermeyi unutmayın !!!
+Hoşunuza giderse repomuza yıldız ⭐ vermeyi unutmayın !!!!
